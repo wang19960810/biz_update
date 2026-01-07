@@ -1,0 +1,64 @@
+@use "@src/assets/style/element-variables" as *;
+
+@use "element-plus/theme-chalk/src/index.scss" as *;
+
+$--primary-color: #e89a4d;
+$--primary-color-hover: #ffb46b;
+
+:root{
+  --primary-color: #fff
+}
+
+
+body {
+  margin: 0;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+
+#app {
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+
+
+.el-input{
+  border-radius: 4px;
+  overflow: hidden;
+  &:hover{
+    box-shadow: 0 0 0 1px $--primary-color inset;
+  }
+}
+
+.el-textarea {
+  border-radius: 4px;
+  overflow: hidden;
+  &:hover{
+    box-shadow: 0 0 0 1px $--primary-color inset;
+  }
+}
+
+.el-input__wrapper{
+  &:hover{
+    box-shadow: 0 0 0 1px $--primary-color inset;
+  }
+}
+
+.el-textarea__inner{
+  &:hover{
+    box-shadow: 0 0 0 1px $--primary-color inset;
+  }
+  &:focus{
+    box-shadow: 0 0 0 1px $--primary-color inset;
+  }
+}
