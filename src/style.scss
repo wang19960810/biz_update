@@ -10,11 +10,16 @@ $--primary-color-hover: #ffb46b;
 }
 
 
+
 body {
   margin: 0;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+p{
+  margin: 0;
 }
 
 h1 {

@@ -3,27 +3,35 @@
 </script>
 
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="slide-fade">
+  <router-view v-slot="{ Component }" class="positon-router">
+    <transition name="slide-fade" mode="out-in">
       <component :is="Component" />
     </transition>
   </router-view>
 </template>
 
 <style scoped>
+.positon-router{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+.v-enter-active, .v-leave-active {
+  transition: all 0.5s ease;
+}
+.v-enter, .v-leave-to{
+  opacity: 0.2;
+  transform:translateX(100%);
+}
 
-.slide-fade-enter-active {
-  transition: all 0.3s ease-out;
+.slide-fade-enter-active, .slide-fade-leave-active {
+  transition: all 0.8s ease;
 }
-.slide-fade-leave-active {
-  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
-}
-.slide-fade-leave {
-  transform: translateX(-1920px);
-  opacity: 0.5;
-}
-.slide-fade-enter {
-  transform: translateX(1920px);
-  opacity: 0.5;
+
+.slide-fade-leave-to{
+  opacity: 0.2;
+  transform:translateX(-100%);
 }
 </style>

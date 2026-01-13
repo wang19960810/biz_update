@@ -1,18 +1,23 @@
-import { createRouter, createWebHistory} from "vue-router"
+import {createRouter, createWebHistory, type RouteRecordRaw} from "vue-router"
 
-const routes = [
+const routes: Readonly<RouteRecordRaw[]>= [
     {
         path: "/",
         component:() => import("../pages/transfer-menu/index.vue"),
+        redirect: '/transform/login',
+        children: []
+    },{
+        path: "/transform/login",
+        component:() => import("../pages/transfer-menu/login/index.vue"),
         meta: {
-            title: "我是登录页",
+            title: "登录",
             transition: "animate_fadeIn"
         },
     },{
         path: "/transform/home",
         component:() => import("../pages/transfer-menu/home/index.vue"),
         meta: {
-            title: "我是登录页",
+            title: "首页",
             transition: "animate_fadeIn"
         },
     }, {
