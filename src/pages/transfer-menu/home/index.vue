@@ -7,11 +7,27 @@
     <div class="box-container">
       <div class="box">
         <p class="title">菜单管理</p>
-        <p class="describe">支持一键 <a>新增菜单</a> <a>同步菜单</a> ， 或通过菜单<a>同步数据视图</a> <a>同步页面配置</a> <a>同步页面按钮</a></p>
+        <div class="button_box">
+          <div class="icon_button"><image></image><span>添加菜单</span></div>
+          <div class="icon_button"><image></image><span>同步菜单</span></div>
+          <div class="icon_button"><image></image><span>同步数据视图</span></div>
+          <div class="icon_button"><image></image><span>同步页面配置</span></div>
+          <div class="icon_button"><image></image><span>同步页数据字典</span></div>
+          <div class="icon_button"><image></image><span>同步页面按钮</span></div>
+        </div>
       </div>
-      <div class="box"></div>
-      <div class="box"></div>
-      <div class="box"></div>
+      <div class="box">
+        <p class="title">数据视图</p>
+<!--        <p class="describe">支持一键 <a>新增菜单</a> <a>同步菜单</a> ， 或通过菜单<a>同步数据视图</a> <a>同步页面配置</a> <a>同步页面按钮</a></p>-->
+      </div>
+      <div class="box">
+        <p class="title">页面配置</p>
+<!--        <p class="describe">支持一键 <a>新增菜单</a> <a>同步菜单</a> ， 或通过菜单<a>同步数据视图</a> <a>同步页面配置</a> <a>同步页面按钮</a></p>-->
+      </div>
+      <div class="box">
+        <p class="title">按钮配置</p>
+<!--        <p class="describe">支持一键 <a>新增菜单</a> <a>同步菜单</a> ， 或通过菜单<a>同步数据视图</a> <a>同步页面配置</a> <a>同步页面按钮</a></p>-->
+      </div>
     </div>
   </div>
 </template>
@@ -45,8 +61,26 @@
       font-weight: 600;
 
     }
-    a {
-      color: #9c4500;
+    .button_box{
+      display: grid;
+      height: 80%;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, auto);
+      margin-top: 30px;
+      gap: 20px;
+      .icon_button {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(255,255,255, 0.5);
+        image{
+          width: 50px;
+          height: 50px;
+        }
+      }
+
     }
+
   }
 </style>
