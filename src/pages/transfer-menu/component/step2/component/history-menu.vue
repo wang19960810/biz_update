@@ -48,7 +48,7 @@ onMounted(() => {
  * @param flag
  */
 const updateStatus = (code: string, flag: boolean) => {
-  const {prodJwt, prodUrl} = serveStore.serveInfo
+  const {url: prodUrl, Jwt: prodJwt} = serveStore.getServeDetails('prod')
   return  axios.post(prodUrl + "/crm-mdm/v1/competences/competences/updateStatus", {code, flag}, {
     headers: {
       Jwt: prodJwt

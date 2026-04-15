@@ -1,41 +1,31 @@
 <script setup lang="ts">
-import {reactive, ref, onMounted, defineProps} from "vue";
+import { computed } from "vue";
 
-const props = defineProps([''])
+interface TableColumn {
+  label: string
+  prop: string
+}
 
-// 表格实例
-const tableRef = ref(null)
-
-
-// 列表渲染数据
-const filterTableData = reactive({value: []})
-
-// 监听鼠标移动更新预览位置
-onMounted(() => {
-
+const props = withDefaults(defineProps<{
+  tableData?: Record<string, unknown>[]
+  tableColumns?: TableColumn[]
+}>(), {
+  tableData: () => [],
+  tableColumns: () => []
 })
 
-
-
+const filterTableData = computed(() => props.tableData)
 </script>
 
 <template>
-  <el-table ref="tableRef" :data="filterTableData.value" style="width: 100%">
-    <el-table-column v-for="(column, index) in tableColumns.value" :key="column.prop" :label="column.label"
-                     :prop="column.prop">
-      <template #header>
-        <div class="header-cell" @mousedown="startResizing(index, $event)">{{ column.label }}</div>
-      </template>
-    </el-table-column>
+  <el-table :data="filterTableData" style="width: 100%">
+    <el-table-column
+      v-for="column in props.tableColumns"
+      :key="column.prop"
+      :label="column.label"
+      :prop="column.prop"
+    />
   </el-table>
-  <div
-      v-if="draggingColumn"
-      ref="dragPreviewRef"
-      class="drag-preview"
-      :style="previewStyle"
-  >
-    {{ draggingColumn.label }}
-  </div>
 </template>
 
 <style scoped lang="less">

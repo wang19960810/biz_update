@@ -14,13 +14,26 @@ const routes: Readonly<RouteRecordRaw[]>= [
             transition: "animate_fadeIn"
         },
     },{
-        path: "/transform/home",
-        component:() => import("../pages/transfer-menu/home/index.vue"),
-        meta: {
-            title: "首页",
-            transition: "animate_fadeIn"
-        },
-    }, {
+        path: "/transform",
+        children: [
+            {
+                path: "/transform/home",
+                component:() => import("../pages/transfer-menu/home/index.vue"),
+                meta: {
+                    title: "首页",
+                    transition: "animate_fadeIn"
+                },
+            },{
+                path: "/transform/update/config",
+                component:() => import("../pages/transfer-menu/system-config/update-config/index.vue"),
+                meta: {
+                    title: "更新配置",
+                    transition: "animate_fadeIn"
+                },
+            }
+        ]
+       
+    },{
         path: "/report",
         component:() => import("../pages/report/main.vue"),
         meta: {
@@ -32,7 +45,7 @@ const routes: Readonly<RouteRecordRaw[]>= [
 
 const router = createRouter({
     history: createWebHistory(),
-    scrollBehavior:(to, form, savedPosition) => {
+    scrollBehavior:(_to, _from, savedPosition) => {
         if(savedPosition) {
             return savedPosition
         } else {

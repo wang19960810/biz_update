@@ -26,7 +26,7 @@ export const usePageButtonStore = defineStore('pageButtonStore', {
          * 更新button之前
          * @param type add: 新增未添加的  update: 更新所有
          */
-        async beforeUpDatePageButton(type: string) {
+        async beforeUpDatePageButton(_type: string) {
             const pageConfigStore = usePageConfigStore()
 
             if(!pageConfigStore.updatablePageConfigs.length) {

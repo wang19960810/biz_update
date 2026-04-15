@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {reactive, ref, defineEmits, defineProps, onMounted} from "vue"
+import {reactive, ref, defineEmits, onMounted} from "vue"
 import { useServeStore} from "@src/store/serveStoreState.ts";
 import type {FormInstance, FormRules} from 'element-plus'
-import type { Serve } from '../../types'
+import type { Serve } from '@src/types/serve'
 
 
 const serveStore = useServeStore()

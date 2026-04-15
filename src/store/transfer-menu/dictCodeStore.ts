@@ -231,7 +231,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             }
 
             if(deleteData.length) {
-                deleteDictCodeOptionRequest = deleteData.map(async (record: DictCodeOptions) => {
+                deleteDictCodeOptionRequest = deleteData.map(async (_record: DictCodeOptions) => {
                     // return await this.deleteDictCode(record)
                 })
             }

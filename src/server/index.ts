@@ -32,20 +32,5 @@ instance.interceptors.response.use(
     }
 )
 
-const margeHeaders = (headers) => {
-
-    return
-}
-
-const http = {
-    get: (url, data, headers) => {
-    },
-    post: () => {},
-    delete: () => {},
-    form: () => {},
-    postForm: () => {},
-    upload: () => {},
-}
-
-export { instance, http }
-export default axios
+export { instance }
+export default instance

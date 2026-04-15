@@ -65,7 +65,7 @@ const beforeMenuSubmit = (data: MenuItem) => {
  */
 const addMenuSubmit = () => {
   const promiseArr: any[] = []
-  const {prodUrl, prodJwt} = serveStore.serveInfo
+  const {url: prodUrl, Jwt: prodJwt} = serveStore.getServeDetails('prod')
   const selectMenuSort = parentFirstSort(selectMenu.value)
   selectMenuSort.forEach((i: MenuItem) =>   {
     const params = beforeMenuSubmit(i)

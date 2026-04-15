@@ -56,7 +56,7 @@ export const useDataViewStore = defineStore('dataView', {
          * @param env 环境
          * @param menu
          */
-        async getDataView(dataViewBase: BaseDataViews, env: 'test' | 'prod', menu: MenuItem) {
+        async getDataView(dataViewBase: BaseDataViews, env: 'test' | 'prod', menu?: MenuItem) {
 
             const {Jwt, url} = useServeStore().getServeDetails(env);
 

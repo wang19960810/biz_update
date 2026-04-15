@@ -1,25 +1,24 @@
 <script setup lang="ts">
-import {reactive, onMounted, ref} from "vue";
-import {useDataViewStore} from "@src/store/transfer-menu";
-import {useServeStore} from "@src/store/serveStoreState.ts"
-import type { DataView, DataViewInfo } from "../../../../types/index"
+import { reactive, onMounted } from "vue";
 import axios from "axios";
+import { useDataViewStore } from "@src/store/transfer-menu";
+import { useServeStore } from "@src/store/serveStoreState.ts";
+import type { DataViewInfo } from "../../../../types/index";
 
 const dataViewStore = useDataViewStore();
 
 const serveStore = useServeStore();
 
-// 系统来源 下拉列表数据
-const systemSources = reactive<{ value: string[] }>({value: []})
-const selectedSystemSources = ref<string>()
+// 绯荤粺鏉ユ簮 涓嬫媺鍒楄〃鏁版嵁
+const systemSources = reactive<{ value: string[] }>({ value: [] })
 
-// 列表数据
-const NewlyAddedData = reactive<{value: DataViewInfo[]}>({value: []})
+// 鍒楄〃鏁版嵁
+const newlyAddedData = reactive<{ value: DataViewInfo[] }>({ value: [] })
 
-// 列表显示数据
-const tableData = reactive<{value: DataViewInfo[]}>({value: []})
+// 鍒楄〃鏄剧ず鏁版嵁
+const tableData = reactive<{ value: DataViewInfo[] }>({ value: [] })
 
-// 分页参数
+// 鍒嗛〉鍙傛暟
 const paginationParam = reactive({
   currentPage: 1,
   pageSize: 10,
@@ -27,21 +26,21 @@ const paginationParam = reactive({
 })
 
 /**
- * 获取数据来源下拉列表
+ * 鑾峰彇鏁版嵁鏉ユ簮涓嬫媺鍒楄〃
  */
 const getSystemSources = async () => {
-  const {Jwt, url} = serveStore.getServeDetails('test')
-  const res = await axios.get(`${url}/crm-mdm/v1/errorlog/errorlog/findCRMSystem`, {headers: {Jwt}})
-  systemSources.value = res.data.result;
+  const { Jwt, url } = serveStore.getServeDetails('test')
+  const res = await axios.get(`${url}/crm-mdm/v1/errorlog/errorlog/findCRMSystem`, { headers: { Jwt } })
+  systemSources.value = res.data.result || []
 }
 
 /**
- * 根据 系统 请求数据视图列表
+ * 鏍规嵁 绯荤粺 璇锋眰鏁版嵁瑙嗗浘鍒楄〃
  * @param dataView
  */
 const getDataViewBySystemSource = async (dataView: string[]) => {
   dataViewStore.loading = true
-  // 测试数据
+
   const getDataViewRequestForTest = dataView.map(async (item) => {
     return await dataViewStore.getDataView({
       systemOfConfigSource: item
@@ -49,114 +48,102 @@ const getDataViewBySystemSource = async (dataView: string[]) => {
   })
   const allTest = await Promise.allSettled(getDataViewRequestForTest)
 
-  let dataAllTest: DataView[] = []
+  let dataAllTest: DataViewInfo[] = []
   allTest.forEach((item) => {
     if (item.status === "fulfilled" && item.value.data.data) {
       dataAllTest = [...dataAllTest, ...item.value.data.data.content]
     }
   })
 
-  // 正式数据
   const getDataViewRequestForPro = dataView.map(async (item) => {
     return await dataViewStore.getDataView({
       systemOfConfigSource: item
-    }, 'pro')
+    }, 'prod')
   })
   const allPro = await Promise.allSettled(getDataViewRequestForPro)
-  let DataAllPro: DataView[] = []
+  let dataAllPro: DataViewInfo[] = []
   allPro.forEach((item) => {
     if (item.status === "fulfilled" && item.value.data.data) {
-      DataAllPro = [...DataAllPro, ...item.value.data.data.content]
+      dataAllPro = [...dataAllPro, ...item.value.data.data.content]
     }
   })
-  await filterDataViewsAdded(dataAllTest, DataAllPro)
-  dataViewStore.loading = false
 
+  filterDataViewsAdded(dataAllTest, dataAllPro)
+  dataViewStore.loading = false
 }
 
 /**
- * 过滤出 需要新增的列表
+ * 杩囨护鍑?闇€瑕佹柊澧炵殑鍒楄〃
  * @param dataViewTestAll
  * @param dataViewProAll
  */
-const filterDataViewsAdded = async (dataViewTestAll: any[], dataViewProAll: any[]) => {
+const filterDataViewsAdded = (dataViewTestAll: DataViewInfo[], dataViewProAll: DataViewInfo[]) => {
   const dataViewProCode = dataViewProAll.map((item) => item.code)
-  NewlyAddedData.value = dataViewTestAll.filter(item => !dataViewProCode.includes(item.code))
-  paginationParam.total = NewlyAddedData.value.length
+  newlyAddedData.value = dataViewTestAll.filter(item => !dataViewProCode.includes(item.code))
+  paginationParam.total = newlyAddedData.value.length
   handleSizeChange(paginationParam.pageSize)
 }
 
 /**
- * 切换每页显示数量
+ * 鍒囨崲姣忛〉鏄剧ず鏁伴噺
  * @param size
  */
 const handleSizeChange = (size: number) => {
   paginationParam.pageSize = size
-  tableData.value =  NewlyAddedData.value.slice(size * (paginationParam.currentPage - 1), size * paginationParam.currentPage)
+  tableData.value = newlyAddedData.value.slice(size * (paginationParam.currentPage - 1), size * paginationParam.currentPage)
 }
 
 /**
- * 切换页数
+ * 鍒囨崲椤垫暟
  */
 const handleCurrentChange = (page: number) => {
   paginationParam.currentPage = page
-  tableData.value =  NewlyAddedData.value.slice(paginationParam.pageSize * (page - 1), page * paginationParam.pageSize)
+  tableData.value = newlyAddedData.value.slice(paginationParam.pageSize * (page - 1), page * paginationParam.pageSize)
 }
 
 /**
- * 通过来源子系统过滤
- */
-const filterBySystemSource = async () => {
-  return  NewlyAddedData.value.filter(item => item.subSystem === selectedSystemSources.value)
-}
-
-/**
- * 勾选 需要更新的 数据
- * @param data 选中的数据
+ * 鍕鹃€?闇€瑕佹洿鏂扮殑 鏁版嵁
+ * @param data 閫変腑鐨勬暟鎹?
  */
 const selectionChange = (data: DataViewInfo[]) => {
-  dataViewStore.dataViewsUpdatable = [...data]
+  dataViewStore.dataViewsUpdatable = data.map((item) => ({
+    configSource: item.code,
+    systemOfConfigSource: item.subSystem,
+    configSourceName: item.name
+  }))
 }
 
 onMounted(async () => {
   await getSystemSources();
-  await getDataViewBySystemSource( systemSources.value)
+  await getDataViewBySystemSource(systemSources.value)
 })
-
 </script>
 
 <template>
   <div class="left-content">
-<!--    <div style="margin:20px 0 30px;text-align: left">-->
-<!--      <el-select style="width: 300px" clearable v-model="selectedSystemSources" @change="" placeholder="请选择服务">-->
-<!--        <el-option v-for="i in systemSources.value" :key="i" :label="i" :value="i"></el-option>-->
-<!--      </el-select>-->
-<!--      <el-button type="primary" style="margin-left: 20px">查询</el-button>-->
-<!--    </div>-->
     <div style="margin: 0 0 10px;text-align: left">
-      <el-button type="primary" @click="dataViewStore.beforeUpDateDataView(true)">同步</el-button>
+      <el-button type="primary" @click="dataViewStore.beforeUpDateDataView(true)">鍚屾</el-button>
     </div>
     <el-table
-        :data="tableData.value"
-        @selection-change="selectionChange"
-        ref="testMenuRef"
-        row-key="id"
-        border
+      :data="tableData.value"
+      @selection-change="selectionChange"
+      row-key="id"
+      border
     >
-      <el-table-column type="selection" width="55"/>
-      <el-table-column prop="subSystem" label="来源子系统" width="220"/>
-      <el-table-column prop="code" label="数据视图编码"/>
-      <el-table-column prop="name" label="数据视图名称"/>
+      <el-table-column type="selection" width="55" />
+      <el-table-column prop="subSystem" label="鏉ユ簮瀛愮郴缁?" width="220" />
+      <el-table-column prop="code" label="鏁版嵁瑙嗗浘缂栫爜" />
+      <el-table-column prop="name" label="鏁版嵁瑙嗗浘鍚嶇О" />
     </el-table>
     <div style="display:flex;justify-content:flex-end;margin-top: 20px">
       <el-pagination
-          v-model:current-page="paginationParam.currentPage"
-          v-model:page-size="paginationParam.pageSize"
-          :page-sizes="[10, 20, 30, 40]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="paginationParam.total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+        v-model:current-page="paginationParam.currentPage"
+        v-model:page-size="paginationParam.pageSize"
+        :page-sizes="[10, 20, 30, 40]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="paginationParam.total"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
       />
     </div>
   </div>
