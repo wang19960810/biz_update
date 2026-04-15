@@ -298,14 +298,13 @@ const guideCards = [
 }
 
 .workspace-body :deep(.menu-content > div) {
-  width: calc(50% - 13px);
+  width: auto;
   height: 100%;
   min-height: 0;
   padding: 58px 18px 14px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  max-width: calc(50% - 13px);
   border: 1px solid var(--line);
   border-radius: 26px;
   background:
@@ -313,6 +312,16 @@ const guideCards = [
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 22px 48px rgba(21, 36, 60, 0.08);
   position: relative;
   overflow: hidden;
+}
+
+.workspace-body :deep(.left-content) {
+  flex: 0 1 420px;
+  min-width: 420px;
+}
+
+.workspace-body :deep(.right-content) {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .workspace-body :deep(.menu-content > div)::before {
@@ -470,9 +479,14 @@ const guideCards = [
 
   .workspace-body :deep(.menu-content > div) {
     width: 100%;
-    max-width: 100%;
     height: auto;
     min-height: auto;
+  }
+
+  .workspace-body :deep(.left-content),
+  .workspace-body :deep(.right-content) {
+    flex: none;
+    min-width: 100%;
   }
 
   .workspace-body :deep(.el-table) {
