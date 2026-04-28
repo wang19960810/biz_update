@@ -1,5 +1,5 @@
 import {defineStore} from 'pinia'
-import type {MenuItem, PageConfig, PageConfigDetail} from "../../pages/transfer-menu/types"
+import type {MenuItem, PageConfig, PageConfigDetail} from "@pages/biz-tools/types"
 import {useDataViewStore, useDictCodeStore, useMenuStore} from './index.ts'
 import {useServeStore} from '../serveStoreState.ts'
 import axios from "axios";

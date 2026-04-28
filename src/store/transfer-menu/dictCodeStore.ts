@@ -2,7 +2,7 @@ import {defineStore} from 'pinia'
 import { useServeStore, usePageConfigStore, useTransferMenuGlobalStore } from "../index.ts"
 import {safeAwait} from "../../units/tool.ts"  // 确保路径和文件名正确
 
-import type {DictCodeOptions, DictCode} from "../../pages/transfer-menu/types"
+import type {DictCodeOptions, DictCode} from "@pages/biz-tools/types"
 
 import axios from "axios";
 import qs from "qs"

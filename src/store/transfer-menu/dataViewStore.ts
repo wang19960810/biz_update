@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia'
 import {useServeStore, usePageConfigStore, useMenuStore, useTransferMenuGlobalStore} from '../index.ts'
-import type {DataView, DataViewInfo, MenuItem} from "../../pages/transfer-menu/types"
+import type {DataView, DataViewInfo, MenuItem} from "@pages/biz-tools/types"
 import axios from "axios";
 import qs from "qs"
 import {safeAwait} from "../../units/tool.ts"

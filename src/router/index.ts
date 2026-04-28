@@ -3,12 +3,12 @@ import {createRouter, createWebHistory, type RouteRecordRaw} from "vue-router"
 const routes: Readonly<RouteRecordRaw[]>= [
     {
         path: "/",
-        component:() => import("../pages/transfer-menu/index.vue"),
+        component:() => import("@pages/biz-tools/index.vue"),
         redirect: '/transform/login',
         children: []
     },{
         path: "/transform/login",
-        component:() => import("../pages/transfer-menu/login/index.vue"),
+        component:() => import("@pages/biz-tools/login/index.vue"),
         meta: {
             title: "登录",
             transition: "animate_fadeIn"
@@ -18,14 +18,14 @@ const routes: Readonly<RouteRecordRaw[]>= [
         children: [
             {
                 path: "/transform/home",
-                component:() => import("../pages/transfer-menu/home/index.vue"),
+                component:() => import("@pages/biz-tools/home/index.vue"),
                 meta: {
                     title: "首页",
                     transition: "animate_fadeIn"
                 },
             },{
                 path: "/transform/update/config",
-                component:() => import("../pages/transfer-menu/system-config/update-config/index.vue"),
+                component:() => import("@pages/biz-tools/system-config/update-config/index.vue"),
                 meta: {
                     title: "更新配置",
                     transition: "animate_fadeIn"

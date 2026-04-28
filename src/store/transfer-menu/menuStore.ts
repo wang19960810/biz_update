@@ -1,7 +1,7 @@
 import {defineStore, type StoreDefinition} from 'pinia'
-import type {MenuItem} from "../../pages/transfer-menu/types"
+import type {MenuItem} from "@pages/biz-tools/types"
 import type {ServeOptions} from "../../types"
-import {filterNewlyAddedData} from "../../pages/transfer-menu/component/reder-menu.ts"
+import {filterNewlyAddedData} from "@pages/biz-tools/component/reder-menu.ts"
 import {useServeStore} from '../serveStoreState.ts'
 import {parentFirstSort, safeAwait} from "../../units/tool.ts"
 import {useTransferMenuGlobalStore} from "./transferMenuGlobalStore.ts"
