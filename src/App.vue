@@ -1,37 +1,19 @@
 <script setup lang="ts">
+import type { RouteLocationNormalizedLoaded } from "vue-router"
 
+const resolveTransitionName = (route: RouteLocationNormalizedLoaded) => {
+  return typeof route.meta.transition === "string" ? route.meta.transition : "route-fade"
+}
+
+const resolveAppViewKey = (route: RouteLocationNormalizedLoaded) => {
+  return route.matched[0]?.path ?? route.fullPath
+}
 </script>
 
 <template>
-  <router-view v-slot="{ Component }" class="positon-router">
-    <transition name="slide-fade" mode="out-in">
-      <component :is="Component" />
+  <router-view v-slot="{ Component, route }">
+    <transition :name="resolveTransitionName(route)">
+      <component :is="Component" :key="resolveAppViewKey(route)" />
     </transition>
   </router-view>
 </template>
-
-<style scoped>
-.positon-router{
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-}
-.v-enter-active, .v-leave-active {
-  transition: all 0.5s ease;
-}
-.v-enter, .v-leave-to{
-  opacity: 0.2;
-  transform:translateX(100%);
-}
-
-.slide-fade-enter-active, .slide-fade-leave-active {
-  transition: all 0.8s ease;
-}
-
-.slide-fade-leave-to{
-  opacity: 0.2;
-  transform:translateX(-100%);
-}
-</style>

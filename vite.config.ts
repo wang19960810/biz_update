@@ -19,15 +19,19 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     open: true,
-    port: 3000,
+    port: 3001,
+    strictPort: true,
     hmr: true,
+    headers: {
+      "Cache-Control": "no-store"
+    },
     allowedHosts: ["rd4f58e7.natappfree.cc"],
     proxy: {
       '/dbRoot.v5': {
         target: 'http://www.example.com',
         changeOrigin: true,
       },
-      '/biz': {
+      '^/biz(?:/|$)': {
         target: 'http://hr.biz-united.com.cn:8210',
         changeOrigin: true,
       },

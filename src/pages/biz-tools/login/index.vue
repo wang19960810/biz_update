@@ -15,7 +15,9 @@ const ruleFormRef = ref<FormInstance>()
 onMounted(() => {
   setTimeout(() => { // 转为异步 等父组件从本地缓存读取完再执行赋值
     if (serveStore.serveInfo) {
-      ruleForm.value = serveStore.serveInfo
+      ruleForm.value =  serveStore.serveInfo
+    } else {
+      ruleForm.value =  JSON.parse(localStorage.getItem('serveInfo') as string)
     }
   }, 0)
 })
@@ -59,7 +61,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       console.log('submit!')
       serveStore.serveInfo = ruleForm.value
       localStorage.setItem('serveInfo', JSON.stringify(serveStore.serveInfo))
-      router.push("/transform/home")
+      router.push("/biz-tools/home")
     } else {
       console.log('error submit!', fields)
     }
@@ -116,9 +118,9 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 
 
 .container {
-  width: 70%;
+  width: 80%;
   margin: 0 auto;
-  padding-top: 25vh;
+  padding-top: 15vh;
   display: flex;
   justify-content: space-between;
 }

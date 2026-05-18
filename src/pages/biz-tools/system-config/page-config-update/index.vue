@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import AddMenuPanel from "../components/add-menu-panel.vue"
-
 </script>
 
 <template>
   <div class="standalone-page">
-    <AddMenuPanel default-tab="add-menu" />
+    <AddMenuPanel default-tab="page-data" />
   </div>
 </template>
 

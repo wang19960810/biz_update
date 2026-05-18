@@ -26,6 +26,7 @@ export interface MenuItem {
     tag: string | null
     type: string
     viewItem: number
+    disable?: boolean // 是否禁用（新增数据不可选中标记）
 }
 
 /**

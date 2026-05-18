@@ -1,39 +1,25 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
+import { systemConfigMenuList, type SystemConfigMenuItem } from "../system-config/config";
 
 const router = useRouter()
 
-const menuChild: Array<{name: string, icon: string, url: string}> = [
-  {
-    name: '同步菜单',
-    icon: '/src/assets/images/add-menu.png',
-    url: '',
-  },{
-    name: '同步配置',
-    icon: '/src/assets/images/update-menu.png',
-    url: '/transform/update/config',
-  },{
-    name: '数据视图',
-    icon: '/src/assets/images/update-data-view.png',
-    url: '',
-  },{
-    name: '页面配置',
-    icon: '/src/assets/images/update-page-config.png',
-    url: '',
-  },{
-    name: '数据字典',
-    icon: '/src/assets/images/update-data-dictionary.png',
-    url: '',
-  },{
-    name: '页面按钮',
-    icon: '/src/assets/images/update-button.png',
-    url: '',
-  },
-]
+/**
+ * 首页入口菜单和单页面头部菜单共用一套配置。
+ * 点击后统一进入 system-config 页面，再按 view 参数匹配到具体单页面组件。
+ */
+const menuChild: SystemConfigMenuItem[] = systemConfigMenuList
 
-const goPage = (menu: {name: string, icon: string, url: string}) => {
-  if (!menu.url) return
-  router.push(menu.url)
+/**
+ * 跳转到系统配置单页面入口，并带上当前菜单对应的视图标识。
+ */
+const goPage = (menu: SystemConfigMenuItem) => {
+  router.push({
+    name: 'biz-tools-system-config',
+    query: {
+      view: menu.view
+    }
+  })
 }
 
 </script>
@@ -65,41 +51,46 @@ const goPage = (menu: {name: string, icon: string, url: string}) => {
 
 <style scoped lang="less">
   .home-page{
+    width: 100%;
     min-height: 100vh;
-    min-width: 100vw;
     background: url("@src/assets/images/home-bg.png")no-repeat center center;
     background-size: cover;
     overflow: hidden;
+    box-sizing: border-box;
   }
   .box-container{
-    padding: 5% 10% ;
-    width: 80%;
-    height: 80%;
+    width: min(88%, 1680px);
+    min-height: 82vh;
+    margin: 0 auto;
+    padding: 8vh 0 6vh;
+    box-sizing: border-box;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, auto);
-    gap: 50px;
+    grid-template-rows: repeat(2, minmax(360px, 1fr));
+    gap: 64px 72px;
   }
   .box{
-    padding: 40px;
+    min-height: 360px;
+    padding: 64px;
     box-sizing: border-box;
     background-color: rgba(255,255,255, 0.5);
     border-radius: 10px;
     border: 1px solid #fff;
     text-align: left;
     .title{
-      font-size: 28px;
+      font-size: 34px;
       font-weight: 600;
 
     }
     .button_box{
       display: grid;
-      height: 80%;
+      min-height: 240px;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(2, auto);
-      margin-top: 30px;
-      gap: 20px;
+      margin-top: 54px;
+      gap: 30px 34px;
       .icon_button {
+        min-height: 118px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -109,12 +100,40 @@ const goPage = (menu: {name: string, icon: string, url: string}) => {
           cursor: pointer;
         }
         img{
-          width: 50px;
-          height: 50px;
+          width: 56px;
+          height: 56px;
         }
       }
 
     }
 
+  }
+
+  @media (max-width: 1280px) {
+    .box-container {
+      width: min(92%, 1080px);
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, minmax(220px, auto));
+      gap: 28px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .home-page {
+      overflow-y: auto;
+    }
+
+    .box-container {
+      width: 92%;
+      padding: 28px 0;
+    }
+
+    .box {
+      padding: 28px;
+    }
+
+    .box .button_box {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 </style>
