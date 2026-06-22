@@ -1,7 +1,7 @@
 import {defineStore} from 'pinia'
 import {useServeStore, usePageConfigStore, useMenuStore, useTransferMenuGlobalStore} from '../index.ts'
 import type {DataView, DataViewInfo, MenuItem} from "@pages/biz-tools/types"
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 import qs from "qs"
 import {safeAwait} from "../../units/tool.ts"
 
@@ -62,7 +62,7 @@ export const useDataViewStore = defineStore('dataView', {
 
             // 发送请求
             const sendRequest = async (url: string, headers: Record<string, string>) => {
-                return axios.get(url, {headers})
+                return instance.get(url, {headers})
             };
 
             const params = this.buildRequestParamsToGetDataView(dataViewBase);
@@ -114,7 +114,7 @@ export const useDataViewStore = defineStore('dataView', {
             const {url, Jwt} = useServeStore().getServeDetails(env)
 
             const sendRequest = (url: string, headers: Record<string, string>) => {
-                return axios.get(url, {headers})
+                return instance.get(url, {headers})
             }
 
             const requestParams = {
@@ -191,7 +191,7 @@ export const useDataViewStore = defineStore('dataView', {
 
             console.log(`${methods === 'post' ? '添加' : '更新'}数据视图 ====> ${dataView.code} 到正式环境 ====> 开始`)
             await safeAwait(
-                axios[methods](`${proUrl}/${dataView.subSystem}/v1/europa/europaInfos`, dataView, {headers: headersProp}),
+                instance[methods](`${proUrl}/${dataView.subSystem}/v1/europa/europaInfos`, dataView, {headers: headersProp}),
                 `${methods === 'post' ? '添加' : '更新'}数据视图 ====> ${dataView.code} 到正式环境 ====> 失败`
             )
             console.log(`${methods === 'post' ? '添加' : '更新'}数据视图 ====> ${dataView.code} 到正式环境 ====> 结束`)

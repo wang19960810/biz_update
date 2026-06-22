@@ -4,7 +4,7 @@ import { useDictCodeStore } from "@src/store/transfer-menu";
 import { useServeStore } from "@src/store/index";
 import {Calendar} from "@element-plus/icons-vue";
 
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 
 import pane1 from "./component/pane1/index.vue"
 import pane2 from "./component/pane2/index.vue"
@@ -20,7 +20,7 @@ const activeName = ref<string>("testAddTable");
  */
 const getSystemSources = async () => {
   const {Jwt, url} = serveStore.getServeDetails('test')
-  const res = await axios.get(`${url}/crm-mdm/v1/dictionary/dictdata/findContainExtendByConditions?dictTypeCode=module_group&pageSize=50`, {headers: {Jwt}})
+  const res = await instance.get(`${url}/crm-mdm/v1/dictionary/dictdata/findContainExtendByConditions?dictTypeCode=module_group&pageSize=50`, {headers: {Jwt}})
   dictCodeStore.systemSource = res.data.result
 }
 

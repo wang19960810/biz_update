@@ -5,7 +5,7 @@ import {filterNewlyAddedData} from "@pages/biz-tools/component/reder-menu.ts"
 import {useServeStore} from '../serveStoreState.ts'
 import {parentFirstSort, safeAwait} from "../../units/tool.ts"
 import {useTransferMenuGlobalStore} from "./transferMenuGlobalStore.ts"
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 
 
 /**
@@ -72,7 +72,7 @@ export const useMenuStore: StoreDefinition<'menu', MenuStoreState> = defineStore
          */
         async fetchMenu(env: 'test' | 'prod'): Promise<MenuItem[]> {
             const {url, Jwt} = useServeStore().getServeDetails(env);
-            const response = await axios.get(`${url}/crm-mdm/v1/competences/competences/findByViewItemAndCurrentUser?viewItem=true&codeOrComment=`, {
+            const response = await instance.get(`${url}/crm-mdm/v1/competences/competences/findByViewItemAndCurrentUser?viewItem=true&codeOrComment=`, {
                 headers: {Jwt},
             });
 
@@ -172,7 +172,7 @@ export const useMenuStore: StoreDefinition<'menu', MenuStoreState> = defineStore
             const methods = params.id ? 'patch' : 'post';
             const headers = {Jwt}
             console.log(`${methods === 'post' ? '新增' : '更新'}菜单 ===> ${params.comment} ====> 开始`)
-            const res = await safeAwait(axios[methods](`${url}/crm-mdm/v1/competences/competences`, params, {headers}), `${methods === 'post' ? '新增' : '更新'}菜单 ===> ${params.comment} ====> 失败`)
+            const res = await safeAwait(instance[methods](`${url}/crm-mdm/v1/competences/competences`, params, {headers}), `${methods === 'post' ? '新增' : '更新'}菜单 ===> ${params.comment} ====> 失败`)
             console.log(`${methods === 'post' ? '新增' : '更新'}菜单 ===> ${params.comment} ====> 结束`)
             return res
         }

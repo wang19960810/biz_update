@@ -6,7 +6,7 @@ import { useServeStore } from '@src/store/serveStoreState.ts'
 
 import type {MenuItem} from "../../../types";
 import {ElMessage} from "element-plus";
-import axios from 'axios'
+import { instance } from '@src/server/index.ts'
 import {parentFirstSort} from "@src/units/tool.ts"
 
 const emit = defineEmits(['change'])
@@ -69,7 +69,7 @@ const addMenuSubmit = () => {
   const selectMenuSort = parentFirstSort(selectMenu.value)
   selectMenuSort.forEach((i: MenuItem) =>   {
     const params = beforeMenuSubmit(i)
-    promiseArr.push(axios.post(prodUrl + "/crm-mdm/v1/competences/competences", params, {
+    promiseArr.push(instance.post(prodUrl + "/crm-mdm/v1/competences/competences", params, {
       headers: {
         Jwt: prodJwt
       }

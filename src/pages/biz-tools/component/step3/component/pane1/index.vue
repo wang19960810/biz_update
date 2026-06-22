@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, onMounted } from "vue";
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 import { useDataViewStore } from "@src/store/transfer-menu";
 import { useServeStore } from "@src/store/serveStoreState.ts";
 import type { DataViewInfo } from "../../../../types/index";
@@ -30,7 +30,7 @@ const paginationParam = reactive({
  */
 const getSystemSources = async () => {
   const { Jwt, url } = serveStore.getServeDetails('test')
-  const res = await axios.get(`${url}/crm-mdm/v1/errorlog/errorlog/findCRMSystem`, { headers: { Jwt } })
+  const res = await instance.get(`${url}/crm-mdm/v1/errorlog/errorlog/findCRMSystem`, { headers: { Jwt } })
   systemSources.value = res.data.result || []
 }
 

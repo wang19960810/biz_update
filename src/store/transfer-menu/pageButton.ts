@@ -4,7 +4,7 @@ import {safeAwait} from "../../units/tool.ts"  // 确保路径和文件名正确
 
 import type { PageButton, PageConfig } from "@pages/biz-tools/types"
 
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 import qs from "qs"
 
 /**
@@ -65,7 +65,7 @@ export const usePageButtonStore = defineStore('pageButtonStore', {
             const requestParamsToString = qs.stringify(requestParams)
 
             const sendRequest = (url: string, headers: Record<string, string>) => {
-                return axios.get(url, {headers})
+                return instance.get(url, {headers})
             }
 
             const requestURL = `${url}/crm-mdm/v1/table/buttonConfig/findByParentCodeAndFunctionCodePage?${requestParamsToString}`
@@ -142,7 +142,7 @@ export const usePageButtonStore = defineStore('pageButtonStore', {
             const methods =  button.id ? 'patch' : 'post'
             let action = button.id ? '更新' : '新增'
             console.log(`${action} 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 开始`)
-            await safeAwait(axios[methods](`${url}/crm-mdm/v1/competences/buttons`, button, {headers: {Jwt}}), `${action} 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 失败`)
+            await safeAwait(instance[methods](`${url}/crm-mdm/v1/competences/buttons`, button, {headers: {Jwt}}), `${action} 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 失败`)
             console.log(`${action} 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 结束`)
         },
 
@@ -154,7 +154,7 @@ export const usePageButtonStore = defineStore('pageButtonStore', {
         async submitDeleteButton(button: PageButton, pageConfig: PageConfig) {
             const {url, Jwt} = useServeStore().getServeDetails('prod')
             console.log(`删除 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 开始`)
-            await safeAwait(axios.delete(`${url}/crm-mdm/v1/competences/buttons/deleteByCode?id=${button.id}&code=${button.code}`, {headers: {Jwt}}), `删除 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 失败`)
+            await safeAwait(instance.delete(`${url}/crm-mdm/v1/competences/buttons/deleteByCode?id=${button.id}&code=${button.code}`, {headers: {Jwt}}), `删除 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 失败`)
             console.log(`删除 正式环境 按钮 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName} ===> ${button.buttonName} ===> 结束`)
         },
 

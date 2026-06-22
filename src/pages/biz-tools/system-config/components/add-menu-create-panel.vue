@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import axios from 'axios'
+import { instance } from '@src/server/index.ts'
 import { ElMessage } from 'element-plus'
 
 import { useMenuStore } from "@src/store/transfer-menu";
@@ -97,7 +97,7 @@ const addMenuSubmit = () => {
 
   selectMenuSort.forEach((item: MenuItem) => {
     const params = beforeMenuSubmit(item)
-    promiseArr.push(axios.post(prodUrl + "/crm-mdm/v1/competences/competences", params, {
+    promiseArr.push(instance.post(prodUrl + "/crm-mdm/v1/competences/competences", params, {
       headers: {
         Jwt: prodJwt
       }

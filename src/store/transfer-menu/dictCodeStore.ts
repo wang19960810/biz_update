@@ -4,7 +4,7 @@ import {safeAwait} from "../../units/tool.ts"  // 确保路径和文件名正确
 
 import type {DictCodeOptions, DictCode} from "@pages/biz-tools/types"
 
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 import qs from "qs"
 
 /**
@@ -131,7 +131,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             const requestParamsToString = qs.stringify(requestParams)
 
             const sendRequest = (url: string, headers: Record<string, string>) => {
-                return axios.get(url, {headers})
+                return instance.get(url, {headers})
             }
 
             const requestURLTest = `${url}/crm-mdm/v1/dictionary/dicttype/findByConditions?${requestParamsToString}`
@@ -153,7 +153,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             const {url, Jwt} = useServeStore().getServeDetails('prod')
             const methods = dictCode.id ? 'patch' : 'post'
             console.log(`${dictCode.id ? '更新' : '新增'} 正式环境 数据字典 ===> ${dictCode.dictTypeCode} ===> 开始`)
-            await safeAwait(axios[methods](`${url}/crm-mdm/v1/dictionary/dicttype`, dictCode, {headers: {Jwt}}), `${dictCode.id ? '更新' : '新增'} 正式环境 数据字典配置 ===> ${dictCode.dictTypeCode} ===> 失败`)
+            await safeAwait(instance[methods](`${url}/crm-mdm/v1/dictionary/dicttype`, dictCode, {headers: {Jwt}}), `${dictCode.id ? '更新' : '新增'} 正式环境 数据字典配置 ===> ${dictCode.dictTypeCode} ===> 失败`)
             console.log(`${dictCode.id ? '更新' : '新增'} 正式环境 数据字典 ===> ${dictCode.dictTypeCode} ===> 结束`)
         },
 
@@ -178,7 +178,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             const headersPao = {Jwt: jwtPro}
 
             const sendRequest = async (url: string, headers: Record<string, string>, errorMessage: string) => {
-                return safeAwait(axios.get(`${url}/crm-mdm/v1/dictionary/dictdata/findTreeByDictTypeCode?${requestParamsToString}`, {headers}), errorMessage)
+                return safeAwait(instance.get(`${url}/crm-mdm/v1/dictionary/dictdata/findTreeByDictTypeCode?${requestParamsToString}`, {headers}), errorMessage)
             }
 
             const logStart = (env: string) => console.log(`查询 ${env} 数据字典配置 ===> ${code} ==> 开始`);
@@ -251,7 +251,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             const errorMessage = `删除 正式环境 数据字典配置 ===> ${codeOptions.dictTypeCode} ${codeOptions.parentDictCode ? '=>' + codeOptions.parentDictCode + '=>' : '=>'} ${codeOptions.dictCode} ===> 失败`
             const logMessage = (node: string) => console.log(`删除 正式环境 数据字典配置 ===> ${codeOptions.dictTypeCode} ${codeOptions.parentDictCode ? '=>' + codeOptions.parentDictCode + '=>' : '=>'} ${codeOptions.dictCode} ===> ${node}`)
             logMessage('开始')
-            await safeAwait(axios.delete(`${url}/crm-mdm/v1/dictionary/dictdata?ids=${codeOptions.id}`, {headers}), errorMessage)
+            await safeAwait(instance.delete(`${url}/crm-mdm/v1/dictionary/dictdata?ids=${codeOptions.id}`, {headers}), errorMessage)
             logMessage('结束')
         },
 
@@ -263,7 +263,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             const {url, Jwt} = useServeStore().getServeDetails('prod')
             const methods = codeOptions.id ? 'patch' : 'post'
             console.log(`更新 正式环境 数据字典配置 ===> ${codeOptions.dictTypeCode} ${codeOptions.parentDictCode ? '=>' + codeOptions.parentDictCode + '=>' : '=>'} ${codeOptions.dictCode} ===> 开始`)
-            await safeAwait(axios[methods](`${url}/crm-mdm/v1/dictionary/dictdata`, codeOptions, {headers: {Jwt}}), `更新 正式环境 数据字典配置 ===> ${codeOptions.dictTypeCode}  ${codeOptions.parentDictCode ? '=>' + codeOptions.parentDictCode + '=>' : ''}  => ${codeOptions.dictCode} ===> 失败`)
+            await safeAwait(instance[methods](`${url}/crm-mdm/v1/dictionary/dictdata`, codeOptions, {headers: {Jwt}}), `更新 正式环境 数据字典配置 ===> ${codeOptions.dictTypeCode}  ${codeOptions.parentDictCode ? '=>' + codeOptions.parentDictCode + '=>' : ''}  => ${codeOptions.dictCode} ===> 失败`)
             console.log(`更新 正式环境 数据字典配置 ===> ${codeOptions.dictTypeCode} ${codeOptions.parentDictCode ? '=>' + codeOptions.parentDictCode + '=>' : '=>'} => ${codeOptions.dictCode} ===> 结束`)
         },
 
@@ -288,7 +288,7 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
             const headersPao = {Jwt: jwtPro}
 
             const sendRequest = async (url: string, headers: Record<string, string>) => {
-                return safeAwait(axios.get(`${url}/crm-mdm/v1/dictionary/dicttype/findByConditions?${requestParamsToString}`, {headers}))
+                return safeAwait(instance.get(`${url}/crm-mdm/v1/dictionary/dicttype/findByConditions?${requestParamsToString}`, {headers}))
             }
 
             const resResultTest = await sendRequest(urlTest, headers)

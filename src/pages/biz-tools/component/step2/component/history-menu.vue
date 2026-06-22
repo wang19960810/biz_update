@@ -2,7 +2,7 @@
 import {onMounted, reactive, ref } from 'vue'
 import { useServeStore } from "@src/store/serveStoreState.ts";
 import type {MenuItem} from "../../../types";
-import axios from 'axios'
+import { instance } from '@src/server/index.ts'
 
 const serveStore = useServeStore()
 
@@ -49,7 +49,7 @@ onMounted(() => {
  */
 const updateStatus = (code: string, flag: boolean) => {
   const {url: prodUrl, Jwt: prodJwt} = serveStore.getServeDetails('prod')
-  return  axios.post(prodUrl + "/crm-mdm/v1/competences/competences/updateStatus", {code, flag}, {
+  return  instance.post(prodUrl + "/crm-mdm/v1/competences/competences/updateStatus", {code, flag}, {
     headers: {
       Jwt: prodJwt
     }

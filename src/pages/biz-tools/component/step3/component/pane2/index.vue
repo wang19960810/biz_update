@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, onMounted } from "vue";
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 import { useDataViewStore } from "@src/store/transfer-menu";
 import { useServeStore } from "@src/store/serveStoreState.ts";
 
@@ -19,7 +19,7 @@ onMounted(async () => {
 const getSystemSources = async () => {
   const { url, Jwt } = serveStore.getServeDetails('test')
   const requestUrl = `${url}/crm-mdm/v1/errorlog/errorlog/findCRMSystem`
-  const res = await axios.get(requestUrl, { headers: { Jwt } })
+  const res = await instance.get(requestUrl, { headers: { Jwt } })
   systemSources.value = res.data.result || []
 }
 

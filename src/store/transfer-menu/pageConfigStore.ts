@@ -2,7 +2,7 @@ import {defineStore} from 'pinia'
 import type {MenuItem, PageConfig, PageConfigDetail} from "@pages/biz-tools/types"
 import {useDataViewStore, useDictCodeStore, useMenuStore} from './index.ts'
 import {useServeStore} from '../serveStoreState.ts'
-import axios from "axios";
+import { instance } from "@src/server/index.ts";
 import qs from "qs"
 import {safeAwait} from "../../units/tool.ts"
 
@@ -135,7 +135,7 @@ export const usePageConfigStore = defineStore('config', {
 
             // 发送请求
             const sendRequest = async (url: string, headers: Record<string, string>) => {
-                return axios.get(url, {headers})
+                return instance.get(url, {headers})
             };
 
             const params = buildRequestParams(data.code);
@@ -215,7 +215,7 @@ export const usePageConfigStore = defineStore('config', {
                 const headers = {Jwt}
                 const errorMessage = `获取 ${env === 'test' ? '测试环境' : '正式环境'} 菜单 ====> ${pageConfigBase.parentName} ====> 页面配置 ====> ${pageConfigBase.functionName}(${pageConfigBase.functionCode})  ====> 失败`
                 return await safeAwait(
-                    axios.get(`${url}/crm-mdm/v1/table/columnConfig/findByParentCodeAndFunctionCodeOrderByFormorder?${params}`, {headers}),
+                    instance.get(`${url}/crm-mdm/v1/table/columnConfig/findByParentCodeAndFunctionCodeOrderByFormorder?${params}`, {headers}),
                     errorMessage)
             }
 
@@ -253,7 +253,7 @@ export const usePageConfigStore = defineStore('config', {
             }
             console.log(`页面配置详情  ====>  同步到正式环境 ====> ${pageConfigBase.parentName} ====> ${pageConfigBase.functionName}(${pageConfigBase.functionCode})  ====> 开始`)
             const errorMessage = `页面配置详情 ====> 同步到正式环境 ====> ${pageConfigBase.parentName} ====> ${pageConfigBase.functionName}(${pageConfigBase.functionCode})  ====> 失败`
-            const res = await safeAwait(axios.post(`${url}/crm-mdm/v1/table/columnConfig/createByColumnConfigBatchCreateDto`, params, {headers}), errorMessage)
+            const res = await safeAwait(instance.post(`${url}/crm-mdm/v1/table/columnConfig/createByColumnConfigBatchCreateDto`, params, {headers}), errorMessage)
             console.log(`页面配置详情 ====> 同步到正式环境 ====> ${pageConfigBase.parentName} ====> ${pageConfigBase.functionName}(${pageConfigBase.functionCode})  ====> 结束`)
             return res
         },
@@ -268,7 +268,7 @@ export const usePageConfigStore = defineStore('config', {
             const methods = pageConfig.id ? 'patch' : 'post'
             const errorMessage = `开始同步到 正式环境 页面配置 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName}(${pageConfig.functionCode}) ===> 失败`
             console.log(`开始同步到 正式环境 页面配置 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName}(${pageConfig.functionCode}) ===> 开始`)
-            await safeAwait(axios[methods](`${url}/crm-mdm/v1/table/functionsub`, pageConfig, {headers}), errorMessage)
+            await safeAwait(instance[methods](`${url}/crm-mdm/v1/table/functionsub`, pageConfig, {headers}), errorMessage)
             console.log(`开始同步到 正式环境 页面配置 ===> ${pageConfig.parentName} ===> ${pageConfig.functionName}(${pageConfig.functionCode}) ===> 结束`)
         },
 
