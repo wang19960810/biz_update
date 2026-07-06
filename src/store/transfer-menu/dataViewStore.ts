@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia'
 import {useServeStore, usePageConfigStore, useMenuStore, useTransferMenuGlobalStore} from '../index.ts'
-import type {DataView, DataViewInfo, MenuItem} from "@pages/biz-tools/types"
+import type {DataView, DataViewInfo, MenuItem, Parameter} from "@pages/biz-tools/types"
 import { instance } from "@src/server/index.ts";
 import qs from "qs"
 import {safeAwait} from "../../units/tool.ts"
@@ -14,7 +14,7 @@ import {safeAwait} from "../../units/tool.ts"
  */
 interface BaseDataViews {
     configSource?: string, // 数据视图编码
-    systemOfConfigSource: string // 数据视图 所属系统
+    systemOfConfigSource: string // 数据视图所属系统
     configSourceName?: string // 数据视图名称
 }
 
@@ -35,13 +35,18 @@ export const useDataViewStore = defineStore('dataView', {
         }
     },
     actions: {
+        resetDataViewCache() {
+            this.dataViewsUpdatable = []
+            this.dataViewTableDataTest = []
+            this.dataViewTableDataPro = []
+        },
 
         /**
-         * 查询正 数据视图 请求参数
+         * 查询数据视图请求参数
          * @param dataViewBase
          */
         buildRequestParamsToGetDataView(dataViewBase: BaseDataViews) {
-            return   {
+            return {
                 subSystem: dataViewBase.systemOfConfigSource,
                 code: dataViewBase.configSource,
                 configSourceName: dataViewBase.configSourceName,
@@ -51,7 +56,7 @@ export const useDataViewStore = defineStore('dataView', {
         },
 
         /**
-         * 查询正式环境 数据视图是否存在
+         * 查询数据视图是否存在
          * @param dataViewBase 数据视图基本信息
          * @param env 环境
          * @param menu
@@ -60,7 +65,6 @@ export const useDataViewStore = defineStore('dataView', {
 
             const {Jwt, url} = useServeStore().getServeDetails(env);
 
-            // 发送请求
             const sendRequest = async (url: string, headers: Record<string, string>) => {
                 return instance.get(url, {headers})
             };
@@ -71,8 +75,8 @@ export const useDataViewStore = defineStore('dataView', {
             const requestUrl = `${url}/${params.subSystem}/v1/europa/europaInfos/findByConditions?${queryString}`;
             const headers = {Jwt};
 
-            if(params.code) {
-                console.log(`开始获取数据视图 ===> ${params.code} ${menu && menu.comment ? ', 涉及页面' + menu.comment : ''}`)
+            if (params.code) {
+                console.log(`开始获取数据视图 ====> ${params.code} ${menu && menu.comment ? ', 涉及页面' + menu.comment : ''}`)
             }
 
             return await sendRequest(requestUrl, headers)
@@ -80,27 +84,37 @@ export const useDataViewStore = defineStore('dataView', {
         },
 
         /**
-         * 查询 正式环境 数据视图 , 保存数据并返回
+         * 查询正式环境数据视图后，保存需要同步的数据
+         * 已存在的数据视图也进入同步队列，后续根据正式环境详情决定走 patch 还是 post。
          * @param viewDataRequest
          */
         AfterGetDataViewPro(viewDataRequest: any) {
             viewDataRequest.map((i: any) => {
+                if (i.status !== 'fulfilled') {
+                    return
+                }
+
                 const urlToArr = i.value.config.url.split('?')
                 const configData: any = qs.parse(urlToArr[1])
-                let logString = `数据视图 ====> ${configData.code}`
-                if (i.status === 'fulfilled' && !i.value.data.data) {
-                    const dataCode = this.dataViewsUpdatable.map(i => i.configSource)
-
-                    !dataCode.includes(configData.code) && this.dataViewsUpdatable.push({
-                        configSource: configData.code,
-                        systemOfConfigSource: configData.subSystem,
-                        configSourceName: configData.configSourceName,
-                    })
-                    logString = '正式环境未存在' + logString
-                    console.log(this.dataViewsUpdatable);
-                } else {
-                    logString = '正式环境已存在' + logString
+                const dataCode = this.dataViewsUpdatable.map(item => item.configSource)
+                const baseDataView: BaseDataViews = {
+                    configSource: configData.code,
+                    systemOfConfigSource: configData.subSystem,
+                    configSourceName: configData.configSourceName,
                 }
+                let logString = `数据视图 ====> ${configData.code}`
+
+                if (!dataCode.includes(configData.code)) {
+                    this.dataViewsUpdatable.push(baseDataView)
+                }
+
+                if (!i.value.data.data) {
+                    logString = '正式环境未存在 ' + logString
+                } else {
+                    logString = '正式环境已存在 ' + logString
+                }
+
+                console.log(this.dataViewsUpdatable);
                 console.log(logString)
 
             })
@@ -108,7 +122,7 @@ export const useDataViewStore = defineStore('dataView', {
         },
 
         /**
-         * 获取的数据视图详情
+         * 获取数据视图详情
          */
         async getDataViewDetail(baseDataViews: BaseDataViews, env: 'test' | 'prod') {
             const {url, Jwt} = useServeStore().getServeDetails(env)
@@ -140,29 +154,48 @@ export const useDataViewStore = defineStore('dataView', {
         /**
          * 根据菜单更新数据视图
          */
-        async beforeUpDateDataViewByMenu () {
+        async beforeUpDateDataViewByMenu() {
 
-            if(!this.dataViewsUpdatable.length) {
+            if (!this.dataViewsUpdatable.length) {
                 await usePageConfigStore().getPageConfigByMenu(useMenuStore().selectedMenu, {dataView: true})
             }
             if (this.dataViewsUpdatable.length) {
-              await this.beforeUpDateDataView()
+                await this.beforeUpDateDataView()
             }
         },
 
         /**
          * 数据视图更新
-         * @param isAdd 是否确认未 正式环境未添加的数据视图
+         * @param isAdd 是否确认只同步正式环境未添加的数据视图
          */
         async beforeUpDateDataView(isAdd?: boolean) {
             useTransferMenuGlobalStore().loading = true
             const requestUpdateAll = this.dataViewsUpdatable.map(async (i: BaseDataViews) => {
                 const resTest = await this.getDataViewDetail(i, 'test');
                 delete resTest.data.data.id;
-                if(!isAdd) {
+                if (!isAdd) {
                     const resPro = await this.getDataViewDetail(i, 'prod');
-                    if(resPro.data.data){
-                        resTest.data.data.id = resPro.data.data.id;
+                    if (resPro.data.data) {
+                        const {code, name, pageable, sourceType, subSystem, view, tenantCode} = resTest.data.data;
+
+                        view.id = resPro.data.data.view.id;
+                        if (view.databaseViewParameterConditions) {
+                            view.databaseViewParameterConditions.forEach((item: Parameter) => delete item.id)
+                        }
+                        view.databaseViewMateDataConditions.forEach((item: any) => delete item.id)
+                        view.databaseViewOrders.forEach((item: any) => delete item.id)
+                        view.databaseViewExternalFields.forEach((item: any) => delete item.id)
+
+                        resTest.data.data = {
+                            code,
+                            name,
+                            pageable,
+                            sourceType,
+                            subSystem,
+                            view,
+                            tenantCode,
+                            id: resPro.data.data.id
+                        }
                     } else {
                         const {code, name, pageable, sourceType, subSystem, view} = resTest.data.data;
                         resTest.data.data = {
@@ -176,8 +209,6 @@ export const useDataViewStore = defineStore('dataView', {
             await Promise.allSettled([...requestUpdateAll])
             useTransferMenuGlobalStore().loading = false
         },
-
-
 
         /**
          * 同步数据视图
@@ -197,6 +228,4 @@ export const useDataViewStore = defineStore('dataView', {
             console.log(`${methods === 'post' ? '添加' : '更新'}数据视图 ====> ${dataView.code} 到正式环境 ====> 结束`)
         },
     }
-
-
 })

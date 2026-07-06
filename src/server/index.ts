@@ -26,7 +26,6 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
     (response: AxiosResponse) => {
-        console.log(response, 'response');
         // 业务状态码 601：未登录/登录失效，跳转到登录页
         if (response.data && (response.data.code === 601 || response.data.responseCode === "601")) {
             ElMessage.error('登录已失效，请重新登录!')
@@ -39,13 +38,7 @@ instance.interceptors.response.use(
     },
     (error) => {
         console.log(error);
-        if(error.status === 500) {
-            ElMessage.error('登录已失效，请重新登录!')
-            setTimeout(() => {
-                // window.location.href = "/biz-tools/login"
-            }, 2000)
-            return Promise.reject(new Error("登录已失效，请重新登录"))
-        }
+        ElMessage.error("请求失败！")
         return Promise.reject(error)
     }
 )

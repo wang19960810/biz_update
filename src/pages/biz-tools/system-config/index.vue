@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import AddMenuPanel from "./components/add-menu-panel.vue"
 import ComingSoonPanel from "./components/coming-soon-panel.vue"
+import DataViewUpdatePanel from "./components/data-view-update-panel.vue"
 import {
   resolveMenuSyncTab,
   resolveSystemConfigMenuItem,
@@ -56,15 +57,12 @@ const panelComponentMap: Record<SystemConfigView, SystemConfigPanelConfig> = {
     component: AddMenuPanel
   },
   'data-view': {
-    component: ComingSoonPanel,
-    props: {
-      title: "数据视图",
-      description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
-    }
+    component: DataViewUpdatePanel
   },
   'page-layout': {
     component: ComingSoonPanel,
     props: {
+      panelType: 'page-layout',
       title: "页面配置",
       description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
     }
@@ -72,6 +70,7 @@ const panelComponentMap: Record<SystemConfigView, SystemConfigPanelConfig> = {
   'dict-code': {
     component: ComingSoonPanel,
     props: {
+      panelType: 'dict-code',
       title: "数据字典",
       description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
     }
@@ -79,6 +78,7 @@ const panelComponentMap: Record<SystemConfigView, SystemConfigPanelConfig> = {
   'page-button': {
     component: ComingSoonPanel,
     props: {
+      panelType: 'page-button',
       title: "页面按钮",
       description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
     }
@@ -150,7 +150,7 @@ const switchView = (menu: SystemConfigMenuItem) => {
 
     <div class="page-content">
       <keep-alive>
-        <component :is="activePanel.component" v-bind="activePanel.props" />
+        <component :is="activePanel.component" :key="activeView" v-bind="activePanel.props" />
       </keep-alive>
     </div>
   </div>

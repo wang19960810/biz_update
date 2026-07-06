@@ -27,6 +27,12 @@ export const useDictCodeStore = defineStore('dictCodeStore', {
         }
     },
     actions: {
+        resetDictCodeCache() {
+            this.systemSource = []
+            this.dictCodesUpdatable = []
+            this.newlyAddedDictCodeData = []
+            this.dictCodeOfTest = []
+        },
 
         /**
          * 查询数据字典之前

@@ -21,6 +21,9 @@ export const usePageButtonStore = defineStore('pageButtonStore', {
         }
     },
     actions: {
+        resetPageButtonCache() {
+            this.buttons = []
+        },
 
         /**
          * 更新button之前

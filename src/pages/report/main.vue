@@ -7,11 +7,11 @@ const submitParams = reactive({
   value: {
     officeLocation: 'S101', // S101 公司 S102 家里
     period: 'S100',  // S100 全天  S101上午 S102 下午
-    projectCode: "PRJ00097002",
-    projectName: "寿仙谷数智项目二阶段",
+    projectCode: "PRJ00097004",
+    projectName: "寿仙谷三期",
     workAddress: "四川省成都市",
     workLog: "  1、云商城小程序测试bug修改 100%\n    2、crm-web后台测试bug修改 100%",
-    workReportTime: "2025-10-28",
+    workReportTime: "2026-07-01",
     workReportType: "S100", // S100 正常 s101 加班
   }
 })
@@ -22,7 +22,7 @@ const domainName = "http://hr.biz-united.com.cn:8210"
 const headers = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
   "Host": "hr.biz-united.com.cn:8210",
-  Loginusertoken: "86c197c6117d478db1d3dda8d357f7b8",
+  Loginusertoken: "a43265cfd98c40b5b0e2e7afa662756f",
   "Menucode": "CRM20220511000002407",
   "Origin": domainName,
   "Referer": `${domainName}/engineering_center/engineering_management`,

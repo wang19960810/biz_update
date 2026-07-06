@@ -47,8 +47,8 @@ export const systemConfigMenuList: SystemConfigMenuItem[] = [
     name: "数据视图",
     icon: "/src/assets/images/update-data-view.png",
     view: "data-view",
-    description: "数据视图能力暂未接入，当前先保留单页面入口映射。",
-    implemented: false
+    description: "查询测试环境数据视图，并按正式环境存在情况执行新增或更新。",
+    implemented: true
   },
   {
     key: "page-layout",
@@ -56,7 +56,7 @@ export const systemConfigMenuList: SystemConfigMenuItem[] = [
     icon: "/src/assets/images/update-page-config.png",
     view: "page-layout",
     description: "页面配置能力暂未接入，当前先保留单页面入口映射。",
-    implemented: false
+    implemented: true
   },
   {
     key: "dict-code",

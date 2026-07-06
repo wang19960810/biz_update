@@ -30,7 +30,11 @@ interface MenuStoreState {
     selectedMenu: MenuItem[]
     // 选择的菜单 - 正式环境
     selectedMenuTest: MenuItem[]
+    // 菜单基础数据是否已完成首轮加载
+    updatedMenuListLoaded: boolean
 }
+
+let updatedMenuListRequest: Promise<void> | null = null
 
 export const useMenuStore: StoreDefinition<'menu', MenuStoreState> = defineStore('menu', {
     state: (): MenuStoreState => {
@@ -42,27 +46,45 @@ export const useMenuStore: StoreDefinition<'menu', MenuStoreState> = defineStore
             addedDataMenuList: [],
             selectedMenu: [],
             selectedMenuTest: [],
+            updatedMenuListLoaded: false,
         }
     },
     actions: {
         /**
          * 更新数据获取
          */
-        async getUpdatedMenuList() {
-            const [testMenu, proMenu] = await Promise.all([
-                this.fetchMenu('test'),
-                this.fetchMenu('prod'),
-            ]);
-            this.menuListDataTest = testMenu;
-            this.menuListPro = proMenu;
-            const {
-                addedDataMenuList,
-                testMenuListFlat,
-                proMenuListFlat
-            } = filterNewlyAddedData(this.menuListDataTest, this.menuListPro);
-            this.addedDataMenuList = addedDataMenuList
-            this.menuListFlatDataTest = testMenuListFlat
-            this.menuListFlatDataPro = proMenuListFlat
+        async getUpdatedMenuList(force = false) {
+            if (!force && this.updatedMenuListLoaded) {
+                return
+            }
+
+            if (updatedMenuListRequest) {
+                return updatedMenuListRequest
+            }
+
+            updatedMenuListRequest = (async () => {
+                const [testMenu, proMenu] = await Promise.all([
+                    this.fetchMenu('test'),
+                    this.fetchMenu('prod'),
+                ])
+
+                this.menuListDataTest = testMenu
+                this.menuListPro = proMenu
+                const {
+                    addedDataMenuList,
+                    testMenuListFlat,
+                    proMenuListFlat
+                } = filterNewlyAddedData(this.menuListDataTest, this.menuListPro)
+
+                this.addedDataMenuList = addedDataMenuList
+                this.menuListFlatDataTest = testMenuListFlat
+                this.menuListFlatDataPro = proMenuListFlat
+                this.updatedMenuListLoaded = true
+            })().finally(() => {
+                updatedMenuListRequest = null
+            })
+
+            return updatedMenuListRequest
         },
 
 

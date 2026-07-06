@@ -24,19 +24,10 @@ const selectMenu = reactive<{ value: MenuItem[] }>({
   value: []
 })
 
-onMounted(async () => {
-  await updateList()
-})
-
-/**
- * 拉取测试环境中可新增的菜单列表。
- */
-const updateList = async () => {
-  loading.value = true
-  await menuStore.getUpdatedMenuList()
-  loading.value = false
+// 菜单数据改由父组件统一拉取，这里只负责声明自身已可渲染
+onMounted(() => {
   emit('render-ready')
-}
+})
 
 /**
  * 勾选需要同步到正式环境的菜单。
@@ -90,7 +81,7 @@ const setHistory = (data: MenuItem[]) => {
 /**
  * 将选中的新增菜单同步到正式环境。
  */
-const addMenuSubmit = () => {
+const addMenuSubmit = async () => {
   const promiseArr: any[] = []
   const { url: prodUrl, Jwt: prodJwt } = serveStore.getServeDetails('prod')
   const selectMenuSort = parentFirstSort(selectMenu.value)
@@ -105,7 +96,8 @@ const addMenuSubmit = () => {
   })
 
   loading.value = true
-  Promise.allSettled(promiseArr).then((results) => {
+  try {
+    const results = await Promise.allSettled(promiseArr)
     const successArr: MenuItem[] = []
 
     results.forEach((result) => {
@@ -118,9 +110,11 @@ const addMenuSubmit = () => {
 
     selectMenu.value = []
     setHistory(successArr)
-    updateList()
+    await menuStore.getUpdatedMenuList(true)
     ElMessage.success('菜单同步完成！')
-  })
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

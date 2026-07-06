@@ -45,6 +45,45 @@ export const usePageConfigStore = defineStore('config', {
         }
     },
     actions: {
+        resetPageConfigCache() {
+            this.updatablePageConfigs = []
+            this.addedPageConfigs = []
+            this.pageOptionTest = []
+            this.pageOptionPro = []
+            this.selectedPage = []
+        },
+
+        /**
+         * 构建页面配置列表查询参数
+         * @param parentCode 菜单编码
+         */
+        buildMenuPageOptionParams(parentCode: string) {
+            const DEFAULT_PAGE_SIZE = 100
+
+            return {
+                parentCode,
+                pageNum: 1,
+                pageSize: DEFAULT_PAGE_SIZE,
+                page: 1,
+                size: DEFAULT_PAGE_SIZE,
+            }
+        },
+
+        /**
+         * 按环境查询单个菜单下的页面配置
+         * @param data 菜单项数据
+         * @param env 环境
+         */
+        async getMenuPageOptionByEnv(data: MenuItem, env: 'test' | 'prod') {
+            const params = this.buildMenuPageOptionParams(data.code)
+            const queryString = qs.stringify(params)
+            const {url, Jwt} = useServeStore().getServeDetails(env)
+            const requestUrl = `${url}/crm-mdm/v1/table/functionsub/findByCondition?${queryString}`
+            const headers = {Jwt}
+
+            console.log(`开始获取  "${data.comment}"  页面配置(${env === 'test' ? '测试环境' : '正式环境'})`)
+            return instance.get(requestUrl, {headers})
+        },
 
         /**
          * 循环获取页面配置及数据视图
@@ -55,7 +94,7 @@ export const usePageConfigStore = defineStore('config', {
             const dataViewStore = useDataViewStore()
 
             dataViewStore.dataViewsUpdatable = []
-            this.updatablePageConfigs = []
+            this.resetPageConfigCache()
 
             // 循环 根据菜单 获取页面配置
             const requestAllFulfilled = menus.map(async (item: MenuItem) => {
@@ -122,43 +161,10 @@ export const usePageConfigStore = defineStore('config', {
          * @param data - 菜单项数据
          */
         async getMenuPageOption(data: MenuItem) {
-            const DEFAULT_PAGE_SIZE = 100;
+            const request = this.getMenuPageOptionByEnv(data, 'test')
+            const request1 = this.getMenuPageOptionByEnv(data, 'prod')
 
-            // 构建请求参数
-            const buildRequestParams = (parentCode: string) => ({
-                parentCode,
-                pageNum: 1,
-                pageSize: DEFAULT_PAGE_SIZE,
-                page: 1,
-                size: DEFAULT_PAGE_SIZE,
-            });
-
-            // 发送请求
-            const sendRequest = async (url: string, headers: Record<string, string>) => {
-                return instance.get(url, {headers})
-            };
-
-            const params = buildRequestParams(data.code);
-            const queryString = qs.stringify(params);
-
-            // 获取测试环境和正式环境的 URL 和 JWT
-            const {url: testUrl, Jwt: testJwt} = useServeStore().getServeDetails('test');
-            const {url: prodUrl, Jwt: prodJwt} = useServeStore().getServeDetails('prod');
-
-            // 构造完整请求 URL
-            const requestUrl = `${testUrl}/crm-mdm/v1/table/functionsub/findByCondition?${queryString}`;
-            const requestUrl1 = `${prodUrl}/crm-mdm/v1/table/functionsub/findByCondition?${queryString}`;
-
-            // 构造请求头
-            const headers = {Jwt: testJwt};
-            const headers1 = {Jwt: prodJwt};
-
-            console.log(`开始获取  "${data.comment}"  页面配置(测试环境)`)
-            const request = sendRequest(requestUrl, headers);
-            console.log(`开始获取  "${data.comment}"  页面配置(正式环境)`)
-            const request1 = sendRequest(requestUrl1, headers1);
-
-            return Promise.allSettled([request, request1]);
+            return Promise.allSettled([request, request1])
         },
 
         /**

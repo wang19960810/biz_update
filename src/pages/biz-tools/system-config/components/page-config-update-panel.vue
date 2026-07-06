@@ -75,7 +75,18 @@ const proMenuList = computed(() => filterMenuTree(menuStore.menuListPro, proSear
  * 勾选菜单后，将选中结果写回全局 store。
  * 后续页面配置、数据视图、数据字典和按钮同步都依赖这里的选中菜单。
  */
+const clearProdRelatedData = () => {
+  pageConfigStore.resetPageConfigCache()
+  dataViewStore.resetDataViewCache()
+  dictCodeStore.resetDictCodeCache()
+  pageButtonStore.resetPageButtonCache()
+}
+
 const selectRow = (value: MenuItem[], key: 'selectedMenu' | 'selectedMenuTest') => {
+  if (key === 'selectedMenu') {
+    clearProdRelatedData()
+  }
+
   menuStore[key] = JSON.parse(JSON.stringify(value))
 }
 
@@ -238,6 +249,7 @@ onBeforeUnmount(() => {
                 class="input-box"
                 type="text"
                 placeholder="请输入菜单名称或编码"
+                clearable
               />
             </div>
             <div class="table-headers">
@@ -276,6 +288,7 @@ onBeforeUnmount(() => {
                 class="input-box"
                 type="text"
                 placeholder="请输入菜单名称或编码"
+                clearable
               />
             </div>
             <div class="table-headers">
