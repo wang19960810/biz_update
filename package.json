@@ -29,7 +29,7 @@
     "sass-loader": "^16.0.6",
     "style-resources-loader": "^1.5.0",
     "typescript": "~5.7.2",
-    "vite": "^6.2.0",
+    "vite": "^5.4.0",
     "vite-plugin-vue-setup-extend": "^0.4.0",
     "vue-tsc": "^2.2.4"
   }

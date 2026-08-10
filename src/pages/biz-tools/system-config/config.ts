@@ -18,18 +18,19 @@ export type MenuSyncTab = 'add-menu' | 'page-data'
 export type SystemConfigMenuItem = {
   key: string
   name: string
-  icon: string
-  view: SystemConfigView
+  icon?: string
+  view?: SystemConfigView
   tab?: MenuSyncTab
-  description: string
-  implemented: boolean
+  description?: string
+  implemented?: boolean
+  className?: string
 }
 
 export const defaultSystemConfigView: SystemConfigView = 'menu-sync'
 export const defaultMenuSyncTab: MenuSyncTab = 'add-menu'
 
 /**
- * 顶部入口菜单配置。
+ * 菜单管理 - 入口菜单配置。
  * implemented=true 表示已经接入真实业务组件，否则先落到占位面板。
  */
 export const systemConfigMenuList: SystemConfigMenuItem[] = [
@@ -73,6 +74,25 @@ export const systemConfigMenuList: SystemConfigMenuItem[] = [
     view: "page-button",
     description: "页面按钮能力暂未接入，当前先保留单页面入口映射。",
     implemented: false
+  }
+]
+
+export const pageBuilderDescribeTag: SystemConfigMenuItem[] = [
+  {
+    key: "visualization",
+    name: "可视化拖拽",
+    icon: "/src/assets/images/drag-and-drop.png",
+    className: "grey-tag",
+  },{
+    key: "standard-component-library",
+    name: "标准组件库",
+    icon: "/src/assets/images/standard-component-library.png",
+    className: "green-tag",
+  },{
+    key: "automatic-code-generation",
+    name: "自动代码生成",
+    icon: "/src/assets/images/automatic-code-generation.png",
+    className: "blue-tag 1d9283",
   }
 ]
 
