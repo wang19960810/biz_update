@@ -73,6 +73,15 @@ export const routes: RouteRecordRaw[] = [
           title: "Page Config Update",
           transition: "route-fade"
         }
+      },
+      {
+        path: "prototype/main",
+        name: "biz-prototype-main",
+        component: () => import("@pages/biz-tools/prototype/main/index.vue"),
+        meta: {
+          title: "Home",
+          transition: "route-fade"
+        }
       }
     ]
   }

@@ -23,6 +23,15 @@ const goPage = (menu: SystemConfigMenuItem) => {
   })
 }
 
+/**
+ * 跳转到原型页制作
+ */
+const goToPrototype = (menu: SystemConfigMenuItem) => {
+  router.push({
+    name: 'biz-prototype-main',
+  })
+}
+
 </script>
 
 <template>
@@ -41,7 +50,7 @@ const goPage = (menu: SystemConfigMenuItem) => {
           <div class="icon_tag" :class="tag.className" v-for="(tag, index) in pageBuilderDescribeTag" :key="index"><img :src="tag.icon" :alt="tag.name"><span>{{ tag.name }}</span></div>
         </div>
         <div class="button_box">
-          <el-button type="primary" size="large" color="#333" :icon="Plus">开始构造</el-button>
+          <el-button type="primary" size="large" color="#333" :icon="Plus" @click="goToPrototype()">开始构造</el-button>
           <div class="link-button">
             <text>查看教程</text>
             <img src="/src/assets/images/go-to.png" alt="向前">
