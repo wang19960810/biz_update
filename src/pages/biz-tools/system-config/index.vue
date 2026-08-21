@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from 'vue'
 import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AddMenuPanel from "./components/add-menu-panel.vue"
 import ComingSoonPanel from "./components/coming-soon-panel.vue"
 import DataViewUpdatePanel from "./components/data-view-update-panel.vue"
+import DictCodePanel from "./components/dict-code-panel.vue"
 import {
   resolveMenuSyncTab,
   resolveSystemConfigMenuItem,
@@ -64,23 +65,18 @@ const panelComponentMap: Record<SystemConfigView, SystemConfigPanelConfig> = {
     props: {
       panelType: 'page-layout',
       title: "页面配置",
-      description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
+      description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载"
     }
   },
   'dict-code': {
-    component: ComingSoonPanel,
-    props: {
-      panelType: 'dict-code',
-      title: "数据字典",
-      description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
-    }
+    component: DictCodePanel
   },
   'page-button': {
     component: ComingSoonPanel,
     props: {
       panelType: 'page-button',
       title: "页面按钮",
-      description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载。"
+      description: "当前先保留页面入口和映射逻辑，后续接入真实业务组件后会直接在这里承载"
     }
   }
 }

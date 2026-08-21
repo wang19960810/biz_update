@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 系统配置单页面支持的视图标识。
  * home 页和 system-config 入口页共用这一套映射，避免菜单和组件切换逻辑分散。
  */
@@ -11,7 +11,7 @@ export type SystemConfigView =
 
 /**
  * 菜单关联同步模块内部的子视图。
- * 同一路由下通过 tab 参数区分“新增菜单”和“更新页面数据”。
+ * 同一路由下通过 tab 参数区分"新增菜单"和"更新页面数据"。
  */
 export type MenuSyncTab = 'add-menu' | 'page-data'
 
@@ -64,8 +64,8 @@ export const systemConfigMenuList: SystemConfigMenuItem[] = [
     name: "数据字典",
     icon: "/src/assets/images/update-data-dictionary.png",
     view: "dict-code",
-    description: "数据字典能力暂未接入，当前先保留单页面入口映射。",
-    implemented: false
+    description: "查询测试环境数据字典，并按正式环境存在情况执行新增或更新。",
+    implemented: true
   },
   {
     key: "page-button",
@@ -110,7 +110,7 @@ export const resolveSystemConfigView = (view: unknown): SystemConfigView => {
 
 /**
  * 将菜单关联同步模块内部的 tab 参数规范化。
- * 当前只支持“新增菜单”和“更新页面数据”两个子视图。
+ * 当前只支持"新增菜单"和"更新页面数据"两个子视图。
  */
 export const resolveMenuSyncTab = (tab: unknown): MenuSyncTab => {
   const normalizedTab = Array.isArray(tab) ? tab[0] : tab

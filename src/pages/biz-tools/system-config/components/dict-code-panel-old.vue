@@ -3,54 +3,45 @@ import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, react
 import { ElMessage } from 'element-plus'
 
 import { instance } from "@src/server/index.ts";
-import { useDataViewStore, useTransferMenuGlobalStore } from "@src/store/transfer-menu";
+import { useDictCodeStore, useTransferMenuGlobalStore } from "@src/store/transfer-menu";
 import { useServeStore } from "@src/store/serveStoreState.ts";
-import type { DataViewInfo } from "../../types/index.d.ts";
+import type { DictCode } from "../../types/index.d.ts";
 
-type DataViewTableRow = DataViewInfo & {
+type DictCodeTableRow = DictCode & {
   syncKey: string
 }
 
 const serveStore = useServeStore()
-const dataViewStore = useDataViewStore()
+const dictCodeStore = useDictCodeStore()
 const transferMenuGlobalStore = useTransferMenuGlobalStore()
 
-// 测试环境系统来源列表
-const systemSources = ref<string[]>([])
-
-// 查询条件
+const systemSources = ref<Array<{dictCode: string, dictValue: string}>>([])
 const selectedSystems = ref<string[]>([])
 const keyword = ref('')
+const queryMode = ref<'newly-added' | 'updatable'>('newly-added')
 
-// 表格数据与勾选结果
-const tableData = ref<DataViewTableRow[]>([])
-const selectedRows = ref<DataViewTableRow[]>([])
-const dataViewTableRef = ref<any>(null)
+const tableData = ref<DictCodeTableRow[]>([])
+const selectedRows = ref<DictCodeTableRow[]>([])
+const dictCodeTableRef = ref<any>(null)
 
-// 请求与骨架屏状态
 const systemSourceLoading = ref(false)
 const tableLoading = ref(false)
 const tableReady = ref(false)
 const showTableSkeleton = computed(() => tableLoading.value || !tableReady.value)
 
-// 分页参数
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10
 })
 
-// 请求版本号，避免快速切换筛选条件后旧请求覆盖新结果
 let tableRenderTimer: number | null = null
 let requestVersion = 0
 
-// 统一处理关键字，避免大小写和空格影响筛选
 const normalizeKeyword = (value: string) => value.trim().toLowerCase()
 
-// 当前查询结果统计
 const queriedCount = computed(() => tableData.value.length)
 const effectiveQuerySystems = computed(() => selectedSystems.value)
 
-// 根据关键字在当前查询结果中做前端过滤
 const filteredTableData = computed(() => {
   const normalizedKeyword = normalizeKeyword(keyword.value)
 
@@ -59,9 +50,9 @@ const filteredTableData = computed(() => {
   }
 
   return tableData.value.filter(item => {
-    return [item.subSystem, item.code, item.name]
+    return [item.dictTypeModuleName, item.dictTypeCode, item.dictTypeName]
       .filter(Boolean)
-      .some(field => field.toLowerCase().includes(normalizedKeyword))
+      .some(field => (field as string).toLowerCase().includes(normalizedKeyword))
   })
 })
 
@@ -74,8 +65,8 @@ const pagedTableData = computed(() => {
 
 const clearSelectionState = () => {
   selectedRows.value = []
-  dataViewStore.dataViewsUpdatable = []
-  dataViewTableRef.value?.clearSelection?.()
+  dictCodeStore.dictCodesUpdatable = []
+  dictCodeTableRef.value?.clearSelection?.()
 }
 
 const resetQueryResult = () => {
@@ -84,7 +75,6 @@ const resetQueryResult = () => {
   clearSelectionState()
 }
 
-// 首次进入页面时延迟挂载表格，减轻主线程一次性渲染压力
 const warmUpTable = () => {
   if (tableReady.value || tableRenderTimer) {
     return
@@ -96,17 +86,12 @@ const warmUpTable = () => {
   }, 0)
 }
 
-const buildSyncKey = (item: Pick<DataViewInfo, 'subSystem' | 'code'>) => `${item.subSystem}::${item.code}`
+const buildSyncKey = (item: Pick<DictCode, 'dictTypeModule' | 'dictTypeCode'>) => `${item.dictTypeModule}::${item.dictTypeCode}`
 
-const setSelectionToStore = (rows: DataViewTableRow[]) => {
-  dataViewStore.dataViewsUpdatable = rows.map(item => ({
-    configSource: item.code,
-    systemOfConfigSource: item.subSystem,
-    configSourceName: item.name
-  }))
+const setSelectionToStore = (rows: DictCodeTableRow[]) => {
+  dictCodeStore.dictCodesUpdatable = rows.map(item => item.dictTypeCode)
 }
 
-// 查询测试环境系统来源列表
 const loadSystemSources = async () => {
   if (systemSourceLoading.value) {
     return
@@ -116,7 +101,7 @@ const loadSystemSources = async () => {
 
   try {
     const { Jwt, url } = serveStore.getServeDetails('test')
-    const res = await instance.get(`${url}/crm-mdm/v1/errorlog/errorlog/findCRMSystem`, {
+    const res = await instance.get(`${url}/crm-mdm/v1/dictionary/dictdata/findContainExtendByConditions?dictTypeCode=module_group&pageSize=50`, {
       headers: { Jwt }
     })
 
@@ -126,18 +111,8 @@ const loadSystemSources = async () => {
   }
 }
 
-const collectDataViewsFromResponse = (responses: PromiseSettledResult<any>[]) => {
-  return responses.reduce<DataViewInfo[]>((result, item) => {
-    if (item.status === 'fulfilled' && item.value?.data?.data?.content) {
-      result.push(...item.value.data.data.content)
-    }
-
-    return result
-  }, [])
-}
-
-const buildTableRows = (testRows: DataViewInfo[]) => {
-  return testRows.map<DataViewTableRow>(item => {
+const buildTableRows = (dictCodes: DictCode[]) => {
+  return dictCodes.map<DictCodeTableRow>(item => {
     return {
       ...item,
       syncKey: buildSyncKey(item)
@@ -145,36 +120,25 @@ const buildTableRows = (testRows: DataViewInfo[]) => {
   })
 }
 
-// 列表查询只查测试环境，正式环境是否已存在留到执行同步时再判断
-const queryDataViews = async () => {
-  const querySystems = effectiveQuerySystems.value
-
-  if (!querySystems.length) {
-    resetQueryResult()
-    ElMessage.warning('暂无可查询的系统来源')
-    return
-  }
-
+const queryDictCodes = async () => {
   const currentRequestVersion = ++requestVersion
   tableLoading.value = true
   resetQueryResult()
 
   try {
-    const testRequests = querySystems.map(item => {
-      return dataViewStore.getDataView({
-        systemOfConfigSource: item
-      }, 'test')
+    await dictCodeStore.getDictCodeTypeAll({
+      dictTypeModule: effectiveQuerySystems.value.length ? effectiveQuerySystems.value.join(',') : ''
     })
-
-    const testResponses = await Promise.allSettled(testRequests)
 
     if (currentRequestVersion !== requestVersion) {
       return
     }
 
-    const testRows = collectDataViewsFromResponse(testResponses)
+    const sourceData = queryMode.value === 'newly-added' 
+      ? dictCodeStore.newlyAddedDictCodeData 
+      : dictCodeStore.dictCodeOfTest
 
-    tableData.value = buildTableRows(testRows)
+    tableData.value = buildTableRows(sourceData)
     pagination.currentPage = 1
   } finally {
     if (currentRequestVersion === requestVersion) {
@@ -183,7 +147,7 @@ const queryDataViews = async () => {
   }
 }
 
-const handleSelectionChange = (rows: DataViewTableRow[]) => {
+const handleSelectionChange = (rows: DictCodeTableRow[]) => {
   selectedRows.value = JSON.parse(JSON.stringify(rows))
   setSelectionToStore(rows)
 }
@@ -197,29 +161,35 @@ const handleCurrentPageChange = (page: number) => {
   pagination.currentPage = page
 }
 
-// 清空系统来源后直接清空列表和勾选结果，不再触发重新查询
 const handleSystemSourceClear = () => {
   requestVersion++
   tableLoading.value = false
   resetQueryResult()
 }
 
-// 清空关键字时恢复当前查询结果的完整列表，并回到第一页
 const handleKeywordClear = () => {
   pagination.currentPage = 1
 }
 
-// 勾选后直接复用 store 的同步逻辑：正式环境存在则 patch，不存在则 post
-const syncSelectedDataViews = async () => {
+const handleQueryModeChange = () => {
+  if (effectiveQuerySystems.value.length) {
+    queryDictCodes()
+  }
+}
+
+const syncSelectedDictCodes = async () => {
   if (!selectedRows.value.length) {
-    ElMessage.info('请选择需要同步的数据视图')
+    ElMessage.info('请选择需要同步的数据字典')
     return
   }
 
   setSelectionToStore(selectedRows.value)
-  await dataViewStore.beforeUpDateDataView()
-  ElMessage.success('数据视图同步完成')
-  await queryDataViews()
+  
+  const operationType = queryMode.value === 'newly-added' ? 'add' : 'update'
+  await dictCodeStore.beforeUpdateDictCodes(operationType)
+  
+  ElMessage.success('数据字典同步完成')
+  await queryDictCodes()
 }
 
 watch(filteredTableData, () => {
@@ -247,7 +217,7 @@ onActivated(async () => {
   }
 
   if (!tableData.value.length && selectedSystems.value.length) {
-    await queryDataViews()
+    await queryDictCodes()
   }
 })
 
@@ -268,11 +238,11 @@ onBeforeUnmount(() => {
   <section class="workspace-card">
     <div class="workspace-header">
       <div>
-        <p class="workspace-kicker">Data View</p>
-        <h2>数据视图</h2>
+        <p class="workspace-kicker">Data Dictionary</p>
+        <h2>数据字典</h2>
       </div>
       <p class="workspace-tip">
-        列表只查询测试环境数据视图，勾选后同步到正式环境；执行同步时再判断正式环境是更新还是新增。
+        列表可查询测试环境数据字典，勾选后同步到正式环境；执行同步时再判断正式环境是更新还是新增。
       </p>
     </div>
 
@@ -295,10 +265,23 @@ onBeforeUnmount(() => {
               >
                 <el-option
                   v-for="item in systemSources"
-                  :key="item"
-                  :label="item"
-                  :value="item"
+                  :key="item.dictCode"
+                  :label="item.dictValue"
+                  :value="item.dictCode"
                 />
+              </el-select>
+            </div>
+
+            <div class="field-item">
+              <label class="field-label">查询模式</label>
+              <el-select
+                v-model="queryMode"
+                class="field-control"
+                placeholder="请选择查询模式"
+                @change="handleQueryModeChange"
+              >
+                <el-option label="可新增字典" value="newly-added" />
+                <el-option label="可更新字典" value="updatable" />
               </el-select>
             </div>
 
@@ -307,7 +290,7 @@ onBeforeUnmount(() => {
               <el-input
                 v-model="keyword"
                 class="field-control"
-                placeholder="请输入系统、编码或名称"
+                placeholder="请输入模块、编码或名称"
                 clearable
                 @clear="handleKeywordClear"
               />
@@ -315,15 +298,14 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="query-actions">
-            <el-button type="primary" :loading="tableLoading" @click="queryDataViews">查询数据视图</el-button>
-            <el-button @click="selectedSystems = [...systemSources]">全选系统</el-button>
+            <el-button type="primary" :loading="tableLoading" @click="queryDictCodes">查询数据字典</el-button>
+            <el-button @click="selectedSystems = systemSources.map(s => s.dictCode)">全选系统</el-button>
           </div>
         </div>
 
-
         <div class="table-toolbar">
-          <el-button type="primary" :disabled="!selectedRows.length" @click="syncSelectedDataViews">
-            同步选中数据视图
+          <el-button type="primary" :disabled="!selectedRows.length" @click="syncSelectedDictCodes">
+            同步选中数据字典
           </el-button>
           <div class="toolbar-stats">
             <span class="stat-item">当前结果: <strong>{{ filteredTableData.length }}</strong> 条</span>
@@ -335,7 +317,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="showTableSkeleton" class="table-skeleton" aria-hidden="true">
-          <div v-for="item in 7" :key="`data-view-skeleton-${item}`" class="skeleton-row">
+          <div v-for="item in 7" :key="`dict-code-skeleton-${item}`" class="skeleton-row">
             <div class="skeleton-block skeleton-cell checkbox"></div>
             <div class="skeleton-block skeleton-cell medium"></div>
             <div class="skeleton-block skeleton-cell long"></div>
@@ -346,16 +328,17 @@ onBeforeUnmount(() => {
 
         <template v-else>
           <el-table
-            ref="dataViewTableRef"
+            ref="dictCodeTableRef"
             :data="pagedTableData"
             row-key="syncKey"
-            :empty-text="effectiveQuerySystems.length ? '暂无数据视图' : '暂无可查询系统'"
+            :empty-text="effectiveQuerySystems.length ? '暂无数据字典' : '暂无可查询系统'"
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" :reserve-selection="true" />
-            <el-table-column prop="subSystem" label="来源子系统" min-width="150" />
-            <el-table-column prop="code" label="数据视图编码" min-width="200" />
-            <el-table-column prop="name" label="数据视图名称" min-width="220" />
+            <el-table-column prop="dictTypeModuleName" label="所属模块" min-width="150" />
+            <el-table-column prop="dictTypeCode" label="类型编码" min-width="200" />
+            <el-table-column prop="dictTypeName" label="类型名称" min-width="220" />
+            <el-table-column prop="modifyTime" label="修改时间" min-width="180" />
           </el-table>
 
           <div class="table-footer">
@@ -461,14 +444,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
-  content: "TEST DATA VIEW";
+  content: "TEST DICT CODE";
   color: #b45309;
   background: rgba(245, 158, 11, 0.12);
 }
 
 .query-toolbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
@@ -478,21 +461,33 @@ onBeforeUnmount(() => {
 .query-fields {
   flex: 1;
   min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(260px, 1.1fr) minmax(220px, 1fr);
-  gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .field-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 
-.field-item-wide {
-  min-width: 240px;
+.field-label {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #344054;
+  white-space: nowrap;
 }
 
-.field-item-keyword {
-  min-width: 220px;
+.field-control {
+  width: 200px;
+}
+
+.field-item:first-child .field-control {
+  width: 240px;
 }
 
 .query-actions {
@@ -502,28 +497,16 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
 }
 
-.section-label,
-.summary-label {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: #8a94a6;
-}
-
-.system-select,
-.field-item :deep(.el-input) {
-  width: 100%;
-}
-
-.field-item :deep(.el-input__wrapper),
-.field-item :deep(.el-select__wrapper) {
-  min-height: 42px;
-  border-radius: 14px;
+.field-control :deep(.el-input__wrapper),
+.field-control :deep(.el-select__wrapper) {
+  min-height: 38px;
+  border-radius: 8px;
   background: rgba(246, 248, 251, 0.92);
   box-shadow: inset 0 0 0 1px rgba(27, 43, 73, 0.08);
 }
 
-.field-item :deep(.is-focused.el-select__wrapper),
-.field-item :deep(.el-input__wrapper.is-focus) {
+.field-control :deep(.is-focused.el-select__wrapper),
+.field-control :deep(.el-input__wrapper.is-focus) {
   box-shadow:
     inset 0 0 0 1px rgba(217, 119, 6, 0.45),
     0 0 0 4px rgba(217, 119, 6, 0.08);
@@ -550,41 +533,31 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.summary-panel {
-  margin-bottom: 18px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  border: 1px solid rgba(28, 44, 75, 0.08);
-  border-radius: 16px;
-  background: rgba(248, 250, 252, 0.82);
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
-  color: #5d697f;
-}
-
-.summary-item strong,
-.table-toolbar strong {
-  color: #172033;
-  font-size: 15px;
-}
-
 .table-toolbar {
   margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+}
+
+.toolbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #5d697f;
+}
+
+.stat-item strong {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stat-divider {
+  color: #d0d5dd;
 }
 
 .workspace-panel :deep(.el-table) {
@@ -635,7 +608,7 @@ onBeforeUnmount(() => {
 
 .skeleton-row {
   display: grid;
-  grid-template-columns: 30px 1fr 1.2fr 1.2fr 90px;
+  grid-template-columns: 30px 1fr 1.2fr 1.2fr 120px;
   align-items: center;
   gap: 14px;
 }
@@ -679,19 +652,25 @@ onBeforeUnmount(() => {
 }
 
 .table-footer {
-  margin-top: 14px;
+  margin-top: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
+  min-height: 32px;
 }
 
 .selection-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
-  color: #8a94a6;
+  color: #5d697f;
+  flex-shrink: 0;
+}
+
+.selection-hint strong {
+  color: #172033;
+  font-weight: 600;
 }
 
 @keyframes skeleton-shimmer {
@@ -701,12 +680,21 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1200px) {
-  .query-toolbar {
+  .query-fields {
+    flex-direction: column;
     align-items: stretch;
   }
 
-  .query-fields {
-    grid-template-columns: 1fr;
+  .field-item {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .field-control,
+  .field-item:first-child .field-control {
+    width: auto;
+    flex: 1;
+    min-width: 200px;
   }
 
   .workspace-tip {
@@ -720,10 +708,13 @@ onBeforeUnmount(() => {
     align-items: flex-start;
   }
 
-  .summary-panel,
   .table-footer,
   .table-toolbar {
     align-items: flex-start;
+  }
+
+  .toolbar-stats {
+    flex-wrap: wrap;
   }
 }
 
@@ -743,13 +734,22 @@ onBeforeUnmount(() => {
     border-radius: 20px;
   }
 
-  .summary-panel {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .query-actions :deep(.el-button),
   .table-toolbar :deep(.el-button) {
+    width: 100%;
+  }
+
+  .field-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .field-label {
+    margin-bottom: 6px;
+  }
+
+  .field-control,
+  .field-item:first-child .field-control {
     width: 100%;
   }
 
