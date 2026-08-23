@@ -14,6 +14,7 @@ export interface RuleForm {
 export interface MenuItem {
     code: string // 菜单编码
     comment:string // 菜单名称
+    fileName: string // 可复制代码内层文件夹名
     parentCode: string // 父级菜单
     resource: string | null // 菜单路径
     icon: string | null // 菜单图标
@@ -56,6 +57,7 @@ export interface MateData {
 export interface Parameter {
     conditionName: string // 字段名
     defaultValueJson: string
+    id?: string
     mainQuery: boolean
     multilineSeparatorInfo: string
     paramName: string // 查询字段名称

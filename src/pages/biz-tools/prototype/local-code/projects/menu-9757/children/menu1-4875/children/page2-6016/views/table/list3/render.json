@@ -1,0 +1,21 @@
+{
+  "pageId": "page_crm20260824183310",
+  "pageCode": "crm20260824183310",
+  "pageName": "页面2",
+  "viewType": "table",
+  "viewName": "列表3",
+  "layout": "table",
+  "hasTree": false,
+  "components": [
+    {
+      "componentCode": "filter-bar",
+      "componentType": "custom",
+      "componentName": "筛选栏"
+    },
+    {
+      "componentCode": "el-table",
+      "componentType": "standard",
+      "componentName": "表格"
+    }
+  ]
+}

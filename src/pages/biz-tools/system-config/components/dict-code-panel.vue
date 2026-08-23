@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, computed, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, computed, ref } from 'vue'
 
 import DictCodeCreatePanel from "./dict-code-create-panel.vue"
 import DictCodeUpdatePanel from "./dict-code-update-panel.vue"

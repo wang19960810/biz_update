@@ -1,31 +1,29 @@
 <template>
   <div class="editor-container">
-    <!-- 左侧：工具/导航栏 -->
-    <aside class="left-sidebar">
-      <div class="logo-area">MOM 设计器</div>
-      <el-menu default-active="1" class="menu-list">
-        <el-menu-item index="1">
-          <el-icon><component :is="icons.Layout" /></el-icon>
-          <span>基础组件</span>
-        </el-menu-item>
-        <el-menu-item index="2">
-          <el-icon><component :is="icons.ChartLine" /></el-icon>
-          <span>图表组件</span>
-        </el-menu-item>
-        <el-menu-item index="3">
-          <el-icon><component :is="icons.List" /></el-icon>
-          <span>列表组件</span>
-        </el-menu-item>
-      </el-menu>
+    <aside class="left-sidebar" :class="{ 'is-collapsed': treeCollapsed }">
+      <div class="logo-area">
+        <template v-if="!treeCollapsed">
+          <div class="sidebar-title-row">
+            <span class="sidebar-kicker">PageBuilder</span>
+            <span class="sidebar-title">项目</span>
+          </div>
+        </template>
 
-      <div class="bottom-actions">
-        <el-button type="primary" size="small" style="width: 100%">保存项目</el-button>
+        <el-button
+          text
+          size="small"
+          class="sidebar-collapse-btn"
+          :icon="treeCollapsed ? icons.Expand : icons.Fold"
+          @click="treeCollapsed = !treeCollapsed"
+        />
       </div>
+      <MenuTreePanel v-model:collapsed="treeCollapsed" @select="handleMenuSelect" />
     </aside>
 
-    <!-- 中间：主要工作区 -->
+    <!-- 组件选择面板 -->
+    <ComponentPalette v-if="showComponentPalette" ref="componentPaletteRef" />
+
     <main class="main-workspace">
-      <!-- 顶部工具栏 -->
       <header class="top-toolbar">
         <div class="toolbar-left">
           <el-button-group>
@@ -44,10 +42,8 @@
         </div>
       </header>
 
-      <!-- 画布区域 -->
       <div class="canvas-area">
-        <div class="canvas-content">
-          <!-- 模拟图片中的仪表盘预览 -->
+        <div v-if="showCanvas" class="canvas-content">
           <div class="preview-card">
             <img src="https://placehold.co/800x450/1a1a1a/FFF?text=Dashboard+Preview" alt="Dashboard Preview" class="preview-img" />
             <div class="play-overlay">
@@ -55,11 +51,13 @@
             </div>
           </div>
         </div>
+        <div v-else class="empty-placeholder">
+          <el-icon :size="80" color="#8a94a6"><FolderOpened /></el-icon>
+          <p class="empty-text">请从左侧选择列表或表单节点开始设计页面</p>
+        </div>
       </div>
     </main>
-
-    <!-- 右侧：属性配置面板 -->
-    <aside class="right-panel">
+    <aside v-if="showPropertyPanel" class="right-panel">
       <div class="panel-header">
         <span>属性设置</span>
       </div>
@@ -113,23 +111,49 @@
   </div>
 </template>
 
-<script setup>
-import { reactive, ref } from 'vue'
+<script setup lang="ts">
+import { computed, reactive, ref } from 'vue'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import type { MenuItem } from '@pages/biz-tools/types'
+import MenuTreePanel from './components/menu-tree-panel.vue'
+import ComponentPalette from './components/component-palette.vue'
 
-// 图标映射，方便模板中使用
+// 统一收口图标引用，模板里直接取别名即可。
 const icons = {
-  Layout: ElementPlusIconsVue.Grid,
-  ChartLine: ElementPlusIconsVue.TrendCharts,
-  List: ElementPlusIconsVue.List,
   Undo: ElementPlusIconsVue.RefreshLeft,
   Redo: ElementPlusIconsVue.RefreshRight,
-  VideoPlay: ElementPlusIconsVue.VideoPlay
+  Fold: ElementPlusIconsVue.Fold,
+  Expand: ElementPlusIconsVue.Expand,
+  VideoPlay: ElementPlusIconsVue.VideoPlay,
+  FolderOpened: ElementPlusIconsVue.FolderOpened
 }
 
-// 模拟的状态数据
 const deviceType = ref('pc')
+// 左上角树面板的折叠状态。
+const treeCollapsed = ref(false)
+const componentPaletteRef = ref(null)
+// 当前选中的菜单节点。
+const selectedMenu = ref<MenuItem | null>(null)
 
+// 处理菜单树选中事件。
+const handleMenuSelect = (menu: MenuItem | null) => {
+  selectedMenu.value = menu
+}
+
+// 只有选中列表或表单节点时，才显示组件栏、画布和属性面板。
+const showComponentPalette = computed(() => {
+  return selectedMenu.value?.builderType === 'list' || selectedMenu.value?.builderType === 'form'
+})
+
+const showCanvas = computed(() => {
+  return showComponentPalette.value
+})
+
+const showPropertyPanel = computed(() => {
+  return showComponentPalette.value
+})
+
+// 中间画布右侧属性栏的示例数据。
 const formData = reactive({
   name: '仪表盘主视图',
   id: 'comp_dashboard_001',
@@ -153,32 +177,61 @@ const formData = reactive({
 
 /* --- 左侧边栏 --- */
 .left-sidebar {
-  width: 220px;
+  width: 260px;
   background-color: #ffffff;
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease;
+}
+
+.left-sidebar.is-collapsed {
+  width: 76px;
 }
 
 .logo-area {
-  height: 60px;
+  min-height: 34px;
   display: flex;
-  align-items: center;
-  padding-left: 20px;
-  font-weight: bold;
-  font-size: 18px;
-  color: #333;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px 12px;
   border-bottom: 1px solid #e4e7ed;
 }
 
-.menu-list {
-  border-right: none !important;
-  flex: 1;
+.left-sidebar.is-collapsed .logo-area {
+  padding: 16px 10px 12px;
 }
 
-.bottom-actions {
-  padding: 20px;
-  border-top: 1px solid #e4e7ed;
+.sidebar-kicker {
+  margin: 0;
+  color: #8a94a6;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sidebar-title {
+  color: #172033;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sidebar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.sidebar-collapse-btn {
+  font-size: 22px;
+  flex-shrink: 0;
+  color: #5f6b7a;
+  margin-top: -2px;
+  padding: 0;
 }
 
 /* --- 中间工作区 --- */
@@ -282,3 +335,18 @@ const formData = reactive({
   font-weight: normal;
 }
 </style>
+/* 空状态占位 */
+.empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #8a94a6;
+}
+
+.empty-text {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #8a94a6;
+}

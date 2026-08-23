@@ -25,6 +25,7 @@ export interface MateData {
 export interface Parameter {
     conditionName: string // 字段名
     defaultValueJson: string
+    id?: string
     mainQuery: boolean
     multilineSeparatorInfo: string
     paramName: string // 查询字段名称

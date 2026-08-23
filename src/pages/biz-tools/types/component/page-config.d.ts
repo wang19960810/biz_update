@@ -14,6 +14,7 @@ export interface PageConfig {
     remark: string // 备注
     systemOfConfigSource: string // 数据来源系统 如crm-dms
     id?: string // 页面配置id
+    isPrimaryList?: boolean // 是否主列表（仅列表类型使用）
 }
 
 /**

@@ -21,8 +21,6 @@ const transferMenuGlobalStore = useTransferMenuGlobalStore()
 const systemSources = ref<Array<{dictCode: string, dictValue: string}>>([])
 const selectedSystems = ref<string[]>([])
 const keyword = ref('')
-const queryMode = 'updatable' // 固定为更新模式
-
 const tableData = ref<DictCodeTableRow[]>([])
 const selectedRows = ref<DictCodeTableRow[]>([])
 const dictCodeTableRef = ref<any>(null)
@@ -182,8 +180,7 @@ const syncSelectedDictCodes = async () => {
 
   setSelectionToStore(selectedRows.value)
   
-  const operationType = queryMode.value === 'newly-added' ? 'add' : 'update'
-  await dictCodeStore.beforeUpdateDictCodes(operationType)
+  await dictCodeStore.beforeUpdateDictCodes('update')
   
   ElMessage.success('数据字典同步完成')
   await queryDictCodes()

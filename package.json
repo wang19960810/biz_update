@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "page-builder:server": "node scripts/page-builder-server.mjs",
+    "dev:page-builder": "node scripts/dev-page-builder.mjs",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },

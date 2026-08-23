@@ -25,6 +25,10 @@ const cleanupDevRuntimeCache = async () => {
   }
 }
 
-await cleanupDevRuntimeCache()
+const bootstrap = async () => {
+  await cleanupDevRuntimeCache()
 
-createApp(App).use(ElementPlus,{locale: zhCn}).use(Router).use(pinia).mount('#app')
+  createApp(App).use(ElementPlus,{locale: zhCn}).use(Router).use(pinia).mount('#app')
+}
+
+void bootstrap()

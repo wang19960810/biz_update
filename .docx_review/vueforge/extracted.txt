@@ -1,0 +1,62 @@
+000	Heading 3	内部提效工具需求文档：VueForge (JSON 驱动页面生成器)
+001	Heading 4	1. 文档概述
+002	First Paragraph	1.1 项目背景
+目前团队内部基于 crm-page 基础组件库开发 Vue 业务页面时，存在大量重复的样板代码（Boilerplate）编写工作。虽然基类已封装了表格渲染、分页、请求等底层逻辑，但开发者仍需手动编写 data、methods 及列格式化等胶水代码。为提升研发效率，需开发一款基于本地 JSON 驱动的可视化/配置化代码生成工具。
+003	Body Text	1.2 产品定位
+VueForge 是一款元数据驱动的前端代码生成器。它通过解析本地 JSON 配置文件（UI 蓝图与数据契约），结合项目现有的 Vue 基类模板，一键生成符合团队工程规范、可直接投入生产的 Vue 业务代码。
+004	Heading 4	2. 核心目标
+005	Compact	提效：将标准列表页、表单页的开发时间从小时级缩短至分钟级。
+006	Compact	规范：杜绝开发者手写代码带来的风格不一致问题，生成的代码 100% 继承 crm-page 基类规范。
+007	Compact	解耦：实现 UI 配置、数据契约与业务逻辑的分离，做到“按需传参、按需生成”。
+008	Heading 4	3. 核心功能需求
+009	First Paragraph	3.1 本地 JSON 存储与配置管理
+010	Compact	多文件拆分存储：摒弃单一大 JSON 方案，采用“目录即层级”的文件结构。包含全局配置（project.json）、页面元数据（page.json）及复用组件目录。
+011	Compact	结构化数据契约：JSON 必须结构化描述请求参数（requestConfig），严格区分“需传递给后端的参数”与“纯前端 UI 状态”，确保生成代码时不产生冗余的 API 请求字段。
+012	Compact	UI 与逻辑映射：JSON 需支持描述表格列配置（columns）及弹窗/按钮交互逻辑（modal/actions），为代码生成器提供完整的 AST（抽象语法树）解析依据。
+013	First Paragraph	3.2 代码生成引擎 (Code Generator)
+014	Compact	基类继承生成：生成的 Vue 代码必须强制继承 crm-page 的 Page 或 Form 基类，自动引入 Modal、Form、formCreate 等标准组件。
+015	Compact	动态 Methods 注入：
+016	Compact	根据 JSON 中的 columns 配置，自动生成 setColumn 方法内的 formatter 格式化逻辑（如 Mapping 映射）。
+017	Compact	根据 JSON 中的 modal.actions 配置，自动生成 modalClick 方法内的 if-else 路由/弹窗控制逻辑。
+018	Compact	根据 JSON 中的 formRules 配置，自动生成 setRule 方法内的属性覆盖（props）及事件绑定（on）逻辑。
+019	Compact	生命周期钩子生成：自动在 created 钩子中注入 getConfigList 或 getFormRule 调用，并在 data 中初始化 params、modalConfig 或 rule 等响应式数据。
+020	First Paragraph	3.3 增量更新与版本控制友好
+021	Compact	代码溯源注释：生成的 Vue 文件头部需保留标准的 @Author、@Date 注释，并标明该文件由 VueForge 自动生成。
+022	Compact	防误改机制：在自动生成的代码区块打上 AUTO-GENERATED 标记，明确 JSON 为唯一事实来源（Single Source of Truth）。
+023	Heading 4	4. 技术架构与规范
+024	First Paragraph	4.1 存储规范
+025	Compact	全局配置：/.meta/project.json
+026	Compact	页面配置：/pages/[pageId]/page.json
+027	Compact	共享组件：/shared/components/
+028	First Paragraph	4.2 核心 JSON 字段契约 (DSL)
+029	Compact	列表页契约：
+030	Compact	requestConfig: 定义 type (GET/POST) 及 defaultParams。
+031	Compact	listCode: 对应基类 getConfigList 的入参。
+032	Compact	columns: 数组结构，包含 field, title, formatterType, formatterRule。
+033	Compact	modal: 包含 formComponent 路径、defaultTitle 及 actions 数组。
+034	Compact	表单页契约 (新增)：
+035	Compact	formCode: 对应基类 getFormRule 的引擎编码（如 salesOrder_form）。
+036	Compact	customComponents: 定义需要全局或局部注册的自定义组件（如 productVos）。
+037	Compact	detailApi: 定义详情获取接口（url, method, paramsMapping），用于生成 getDetail 方法及 formComplete 钩子。
+038	Compact	dynamicRules: 描述需要动态修改的表单项规则，包含字段名（field）、需覆盖的 props 及 on 事件。
+039	Compact	submitApi: 定义提交接口（url, method）。
+040	Compact	submitValidations: 描述提交前的校验逻辑（如必填项、数组长度、嵌套对象校验等），用于自动生成 submit 方法内的拦截代码。
+041	First Paragraph	4.3 生成器技术栈建议
+042	Compact	模板引擎：Handlebars / EJS / Nunjucks（用于拼装 Vue SFC）。
+043	Compact	代码格式化：Prettier（确保生成的 Vue 代码缩进、换行符合团队 ESLint 规范）。
+044	Compact	文件监听：Chokidar（可选，用于监听本地 JSON 变化实现热生成）。
+045	Heading 4	5. 预期产出示例
+046	First Paragraph	输入一份标准的表单页 JSON，工具应输出如下结构的 .vue 文件：
+047	Compact	<script> 标签内包含完整的 export default {} 对象。
+048	Compact	extends: Form 且 components 正确注册 formCreate.$form()。
+049	Compact	created 钩子中调用 getFormRule。
+050	Compact	methods 中包含：
+051	Compact	formComplete 触发 getDetail 请求。
+052	Compact	setRule 根据 JSON 动态修改指定字段的 props 和 on 事件。
+053	Compact	submit 方法包含根据 JSON 生成的校验逻辑及 $request.post 提交代码。
+054	Heading 4	6. 后续演进规划
+055	Compact	V1.0：支持标准列表页（ProTable）及基础表单页（FormCreate）的代码生成。
+056	Compact	V2.0：支持复杂表单联动、详情页生成；支持在 JSON 中预留 customCode 插槽，允许开发者在生成的代码中插入不可被覆盖的自定义逻辑。
+057	Compact	V3.0：开发可视化画板（UI Designer），通过拖拽组件直接修改本地 JSON，实现“所见即所得”的代码生成闭环。
+058	Normal	(AI生成)
+TABLES	0

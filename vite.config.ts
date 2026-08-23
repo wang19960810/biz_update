@@ -30,7 +30,6 @@ export default defineConfig({
     headers: {
       "Cache-Control": "no-store"
     },
-    allowedHosts: ["rd4f58e7.natappfree.cc"],
     proxy: {
       '/dbRoot.v5': {
         target: 'http://www.example.com',

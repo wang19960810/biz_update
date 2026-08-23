@@ -26,7 +26,7 @@ const goPage = (menu: SystemConfigMenuItem) => {
 /**
  * 跳转到原型页制作
  */
-const goToPrototype = (menu: SystemConfigMenuItem) => {
+const goToPrototype = () => {
   router.push({
     name: 'biz-prototype-main',
   })
