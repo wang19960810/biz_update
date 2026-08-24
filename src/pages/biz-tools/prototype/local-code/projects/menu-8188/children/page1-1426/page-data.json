@@ -1,0 +1,136 @@
+{
+  "version": "1.0.0",
+  "pageId": "page_crm20260824042781",
+  "pageCode": "crm20260824042781",
+  "pageName": "页面1",
+  "dataPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page-data.json",
+  "views": [
+    {
+      "viewId": "view_page_crm20260824042781_table_list1",
+      "pageId": "page_crm20260824042781",
+      "menuId": "menu-138b028f-c3f8-45f3-b240-229c8ca2801e",
+      "viewCode": "list1",
+      "viewType": "table",
+      "viewName": "main_list",
+      "renderPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/views/table/list1/render.json",
+      "exportPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1/table/list1/index.vue",
+      "status": "generated"
+    }
+  ],
+  "components": [
+    {
+      "componentId": "cmp_page_crm20260824042781_table_list1",
+      "pageId": "page_crm20260824042781",
+      "viewId": "view_page_crm20260824042781_table_list1",
+      "parentComponentId": "",
+      "componentType": "standard",
+      "componentCode": "el-table",
+      "componentName": "main_list",
+      "componentPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1/table/list1/index.vue",
+      "renderPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/views/table/list1/render.json",
+      "exportPath": "src/pages/biz-tools/menu-8188/children/page1-1426/table/list1/index.vue"
+    }
+  ],
+  "attrs": [
+    {
+      "attrId": "attr_page_crm20260824042781_title",
+      "ownerType": "page",
+      "ownerId": "page_crm20260824042781",
+      "key": "title",
+      "value": "页面1",
+      "valueType": "string",
+      "bindPath": "page.title"
+    },
+    {
+      "attrId": "attr_page_crm20260824042781_columns_list1",
+      "ownerType": "component",
+      "ownerId": "cmp_page_crm20260824042781_table_list1",
+      "key": "columns",
+      "value": [
+        {
+          "label": "菜单名称",
+          "prop": "menuName"
+        },
+        {
+          "label": "菜单编码",
+          "prop": "menuCode"
+        }
+      ],
+      "valueType": "json",
+      "bindPath": "views.view_page_crm20260824042781_table_list1.components[1].props.columns"
+    }
+  ],
+  "events": [
+    {
+      "eventId": "event_page_crm20260824042781_list1_row_click",
+      "ownerType": "component",
+      "ownerId": "cmp_page_crm20260824042781_table_list1",
+      "name": "row-click",
+      "handler": "handleRowClick",
+      "params": [
+        "row",
+        "column",
+        "event"
+      ]
+    }
+  ],
+  "renderData": {
+    "version": "1.0.0",
+    "components": [
+      {
+        "componentId": "canvas_test_001",
+        "menuId": "menu-136f3607-42c5-42ce-991b-c4bfc8b84b59",
+        "pageId": "page_crm20260824042781",
+        "componentType": "table",
+        "componentName": "画布测试组件",
+        "canvasConfig": {
+          "selectionMode": "multiple",
+          "columns": [
+            {
+              "label": "测试列1",
+              "prop": "field1",
+              "width": 150
+            },
+            {
+              "label": "测试列2",
+              "prop": "field2",
+              "width": 120
+            }
+          ]
+        },
+        "sortIndex": 1,
+        "visible": true,
+        "createdAt": "2026-08-24T15:38:56.688Z",
+        "updatedAt": "2026-08-24T15:38:56.688Z"
+      },
+      {
+        "componentId": "comp_1787587084861_20urr7h",
+        "menuId": "menu-138b028f-c3f8-45f3-b240-229c8ca2801e",
+        "pageId": "page_crm20260824042781",
+        "componentType": "table",
+        "componentName": "列表组件",
+        "canvasConfig": {
+          "selectionMode": "none",
+          "columns": [
+            {
+              "label": "列1",
+              "prop": "field1"
+            },
+            {
+              "label": "列2",
+              "prop": "field2"
+            },
+            {
+              "label": "列3",
+              "prop": "field3"
+            }
+          ]
+        },
+        "sortIndex": 0,
+        "visible": true,
+        "createdAt": "2026-08-24T15:58:04.861Z",
+        "updatedAt": "2026-08-24T15:58:04.861Z"
+      }
+    ]
+  }
+}

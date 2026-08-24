@@ -354,21 +354,37 @@ export const buildPageBundle = async (
   page.primaryListCode = primaryTable?.node?.code || ''
   page.hasPrimaryList = Boolean(primaryTable)
 
-  state.views.push(...createViewRecords(
+  const views = createViewRecords(
     page,
     tableSpecs,
     formSpecs,
     componentSpecs,
     isGenerated
-  ))
-  state.components.push(...createComponentRecords(
+  )
+  const components = createComponentRecords(
     page,
     tableSpecs,
     formSpecs,
     componentSpecs
-  ))
-  state.attrs.push(...createAttributeRecords(page, tableSpecs, formSpecs))
-  state.events.push(...createEventRecords(page, tableSpecs))
+  )
+  const attrs = createAttributeRecords(page, tableSpecs, formSpecs)
+  const events = createEventRecords(page, tableSpecs)
+  const pageData = {
+    version: '1.0.0',
+    pageId: page.pageId,
+    pageCode: page.pageCode,
+    pageName: page.pageName,
+    dataPath: page.dataPath,
+    views,
+    components,
+    attrs,
+    events,
+    // renderData 是页面专属的本地渲染数据，后续由画布保存接口持续更新。
+    renderData: {
+      version: '1.0.0',
+      components: []
+    }
+  }
 
   const fileRecords = createFileRecords(
     page,
@@ -394,6 +410,7 @@ export const buildPageBundle = async (
     primaryTable,
     formSpecs,
     componentSpecs,
+    pageData,
     isChecked,
     isGenerated,
     // 只有真正的菜单或页面子节点才需要生成 children 目录。

@@ -66,6 +66,18 @@ const syncing = ref(false)
 const loadingDatabase = ref(true)
 type MenuFormModel = Pick<MenuItem, 'comment' | 'fileName' | 'code' | 'parentCode'>
 
+/**
+ * 父级菜单树节点。
+ *
+ * value 保存菜单编码，和 MenuItem.parentCode 保持一致；disabled 只影响选择，不改变树展示。
+ */
+interface ParentMenuTreeNode {
+  value: string
+  label: string
+  disabled: boolean
+  children: ParentMenuTreeNode[]
+}
+
 // 新增菜单支持的 PageBuilder 节点类型；菜单是容器，页面、列表和表单是实际页面节点。
 const builderTypeOptions: Array<{ label: string; value: PageBuilderMenuType }> = [
   { label: '菜单', value: 'folder' },
@@ -91,13 +103,80 @@ const availableBuilderTypeOptions = computed(() => {
   return builderTypeOptions
 })
 
-// 菜单和页面可以作为父级；列表和表单只能挂在页面下，且不能继续创建子菜单。
-const parentMenuOptions = computed(() => {
-  return flatMenuList.value.filter(item => (
-    (showPageConfig.value ? item.builderType === 'page' : item.builderType === 'folder')
-    && item.id !== editingId.value
-  ))
+// TreeSelect 的字段映射，value 保存菜单编码，不额外引入界面专用字段到菜单数据中。
+const parentMenuTreeProps = {
+  value: 'value',
+  label: 'label',
+  children: 'children',
+  disabled: 'disabled'
+}
+
+// 编辑菜单时，当前节点及所有子孙节点不能被选择为父级，避免形成循环树。
+const blockedParentCodes = computed(() => {
+  if (formMode.value !== 'edit' || !editingId.value) {
+    return new Set<string>()
+  }
+
+  const current = getDraftById(editingId.value)
+  if (!current) {
+    return new Set<string>()
+  }
+
+  return new Set([current.code, ...collectSubtreeCodes(flatMenuList.value, current.code)])
 })
+
+// 判断节点能否作为当前草稿的父级：菜单/页面挂在菜单下，列表/表单挂在页面下。
+const canSelectParentMenu = (item: MenuItem) => {
+  if (blockedParentCodes.value.has(item.code)) {
+    return false
+  }
+
+  return showPageConfig.value
+    ? item.builderType === 'page'
+    : item.builderType === 'folder'
+}
+
+// 将扁平菜单数据转换成完整树，同时保留不能选择的节点作为层级提示。
+const buildParentMenuTree = (menus: MenuItem[]): ParentMenuTreeNode[] => {
+  const nodesByCode = new Map<string, ParentMenuTreeNode>()
+  const rootNodes: ParentMenuTreeNode[] = []
+
+  menus.forEach(item => {
+    nodesByCode.set(item.code, {
+      value: item.code,
+      label: `${item.comment} (${item.code})`,
+      disabled: !canSelectParentMenu(item),
+      children: []
+    })
+  })
+
+  menus.forEach(item => {
+    const node = nodesByCode.get(item.code)
+    const parentNode = item.parentCode ? nodesByCode.get(item.parentCode) : undefined
+
+    if (!node) {
+      return
+    }
+
+    if (parentNode) {
+      parentNode.children.push(node)
+      return
+    }
+
+    rootNodes.push(node)
+  })
+
+  const sortNodes = (nodes: ParentMenuTreeNode[]) => {
+    nodes.sort((left, right) => left.label.localeCompare(right.label, 'zh-Hans-CN'))
+    nodes.forEach(node => sortNodes(node.children))
+  }
+
+  sortNodes(rootNodes)
+  return rootNodes
+}
+
+// 新增/编辑时展示完整父级树，不匹配当前类型的节点显示为禁用状态。
+const parentMenuTreeData = computed(() => buildParentMenuTree(flatMenuList.value))
 
 // 判断当前节点是否允许新增子菜单。
 const canAddChild = (node: MenuItem) => node.builderType === 'folder' || node.builderType === 'page'
@@ -234,6 +313,13 @@ const resetDraft = (parentCode = '') => {
 
 // 节点类型变化时同步清理不适用的字段，并固定列表/表单类型值。
 watch(() => draft.builderType, value => {
+  const selectedParent = draftParent.value
+
+  // 类型切换后，原父级不满足新类型要求时清空，交由树选择器重新选择。
+  if (selectedParent && !canSelectParentMenu(selectedParent)) {
+    draft.parentCode = ''
+  }
+
   if (value === 'folder') {
     draft.resource = null
     draft.pageConfig = null
@@ -303,16 +389,28 @@ const openEditDialog = (node?: MenuItem) => {
   formVisible.value = true
 }
 
-// 点击树节点时，保持选中状态并向外抛出当前节点。
+// 点击节点内容时切换当前页面，复选框只负责同步勾选。
 const handleNodeClick = (node: MenuItem) => {
   selectMenu(node.id)
   emit('select', node)
 }
 
-// 复选框变动时，重新收集当前勾选的菜单 ID。
-const handleTreeCheckChange = () => {
+// 复选框变动时，立即保存勾选状态到本地数据库，保证刷新后不丢失。
+const handleTreeCheckChange = async () => {
   const checkedKeys = treeRef.value?.getCheckedKeys?.() ?? []
   setCheckedMenuIds(checkedKeys.map((item: string | number) => String(item)))
+
+  // 勾选状态必须立即持久化到本地数据库，避免刷新后恢复到上次保存的状态。
+  try {
+    await updatePageBuilderLocalStatus({
+      syncedMenuIds: flatMenuList.value
+        .filter(item => item.submitStatus === 'submitted')
+        .map(item => item.id),
+      checkedMenuIds: [...checkedMenuIds.value]
+    })
+  } catch {
+    // 本地数据库未连接时不阻塞用户操作，只在内存中保持勾选状态。
+  }
 }
 
 // 把新增、编辑、删除后的菜单树保存到本地 Node 服务，并生成本地渲染文件和可复制代码。
@@ -482,19 +580,25 @@ const submitDraft = async () => {
   if (draft.parentCode) {
     const parentMenu = flatMenuList.value.find(item => item.code === draft.parentCode.trim())
 
-    if (!parentMenu) {
-      ElMessage.warning('父级菜单不存在')
-      return
-    }
+    // 本地菜单存在时，校验类型是否匹配。
+    if (parentMenu && showPageConfig.value && parentMenu.builderType !== 'page') {
 
-    if (showPageConfig.value && parentMenu.builderType !== 'page') {
       ElMessage.warning('列表和表单只能选择页面作为父级')
       return
     }
 
-    if (!showPageConfig.value && parentMenu.builderType !== 'folder') {
+
+    if (parentMenu && !showPageConfig.value && parentMenu.builderType !== 'folder') {
       ElMessage.warning('菜单和页面只能选择菜单作为父级')
       return
+    }
+
+    // 本地菜单不存在时，视为外部系统菜单编码，给出提示但不阻止保存。
+    if (!parentMenu && !showPageConfig.value) {
+      console.info(
+        `[PageBuilder] 父级编码 "${draft.parentCode.trim()}" 不在本地菜单树中，` +
+        `同步时会作为系统菜单的子菜单提交。请确认该编码在测试环境中存在。`
+      )
     }
   }
 
@@ -565,9 +669,14 @@ const submitDraft = async () => {
   }
 
   if (formMode.value === 'edit' && editingId.value) {
-    updateMenu(editingId.value, draft)
+    const updatedMenu = updateMenu(editingId.value, draft)
+    if (updatedMenu) {
+      emit('select', updatedMenu)
+    }
   } else {
-    addMenu(draft)
+    const createdMenu = addMenu(draft)
+    // 新增后默认选中新节点，但不改变同步勾选状态。
+    emit('select', createdMenu)
   }
 
   formVisible.value = false
@@ -681,11 +790,10 @@ const syncTree = async () => {
             show-checkbox
             default-expand-all
             class="tree-view"
-            @node-click="handleNodeClick"
             @check-change="handleTreeCheckChange"
           >
           <template #default="{ data }">
-            <div class="tree-node">
+            <div class="tree-node" @click.stop="handleNodeClick(data)">
               <img
                 v-if="data.builderType === 'folder'"
                 :src="folderIcon"
@@ -777,25 +885,43 @@ const syncTree = async () => {
             <el-input v-model="draft.code" :disabled="isCodeLocked" />
           </el-form-item>
           <el-form-item v-if="!showPageConfig" label="父级菜单">
-            <el-select v-model="draft.parentCode" filterable clearable placeholder="选择父级菜单">
-              <el-option label="根节点" value="" />
-              <el-option
-                v-for="item in parentMenuOptions"
-                :key="item.id"
-                :label="`${item.comment} (${item.code})`"
-                :value="item.code"
-              />
-            </el-select>
+            <el-tree-select
+              v-model="draft.parentCode"
+              :data="parentMenuTreeData"
+              :props="parentMenuTreeProps"
+              node-key="value"
+              check-strictly
+              clearable
+              filterable
+              default-expand-all
+              class="w-full"
+              placeholder="选择本地父级菜单或清空后手动输入系统菜单编码"
+            />
+          </el-form-item>
+
+          <el-form-item v-if="!showPageConfig" label="父级编码">
+            <el-input
+              v-model="draft.parentCode"
+              :disabled="Boolean(draftParent)"
+              placeholder="可输入系统现有菜单编码"
+            />
           </el-form-item>
 
           <el-form-item v-if="showPageConfig" label="文件名称" prop="fileName" required>
             <el-input v-model="draft.fileName" placeholder="例如 menu-two" />
           </el-form-item>
-          <el-form-item v-if="showPageConfig" label="父级编码" prop="parentCode" required>
-            <el-input 
-              v-model="draft.parentCode" 
+          <el-form-item v-if="showPageConfig" label="父级菜单" prop="parentCode" required>
+            <el-tree-select
+              v-model="draft.parentCode"
+              :data="parentMenuTreeData"
+              :props="parentMenuTreeProps"
+              node-key="value"
+              check-strictly
+              filterable
+              default-expand-all
+              class="w-full"
               :disabled="formMode === 'add-child'"
-              placeholder="输入父级菜单编码"
+              placeholder="请选择页面"
             />
           </el-form-item>
           <el-form-item v-if="showPageConfig" label="功能编码" required>
@@ -988,3 +1114,6 @@ const syncTree = async () => {
   }
 }
 </style>
+
+
+

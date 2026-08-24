@@ -116,6 +116,8 @@ export const createPageRecord = (node, project, parentPage = null, parentContain
     projectId: project.projectId,
     menuId: node.id,
     pageRootPath,
+    // 页面级数据独立保存，database.json 只通过这个路径索引。
+    dataPath: toPosix(path.join(pageRootPath, 'page-data.json')),
     sharedPath: toPosix(path.join(pageRootPath, 'shared')),
     childrenPath: toPosix(path.join(pageRootPath, 'children')),
     viewRootPath: toPosix(path.join(pageRootPath, 'views')),
@@ -159,10 +161,10 @@ export const serializeMenuTree = (node, checkedMenuIds) => {
 }
 
 // 从任意菜单节点向上查找所属页面节点。
-export const findOwningPageNode = (nodeMap, node) => {
-  let cursor = node
+export const findOwningPageNode = (codeMap, node) => {
+    let cursor = node
 
-  while (cursor) {
+    while (cursor) {
     if (cursor.pageId) {
       return cursor
     }
@@ -171,7 +173,7 @@ export const findOwningPageNode = (nodeMap, node) => {
       break
     }
 
-    const parent = nodeMap.get(String(cursor.parentCode))
+        const parent = codeMap.get(String(cursor.parentCode))
 
     if (!parent) {
       break

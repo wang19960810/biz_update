@@ -17,7 +17,7 @@ export const DATABASE_PATH = path.join(LOCAL_CODE_ROOT, 'database.json')
 
 // 数据库首次创建时使用的空结构。
 export const DEFAULT_DATABASE = {
-  version: '2.5.0',
+  version: '2.7.0',
   rootDir: 'src/pages/biz-tools/prototype/local-code',
   projectRootDir: 'src/pages/biz-tools/prototype/local-code/projects',
   tables: {
@@ -25,10 +25,6 @@ export const DEFAULT_DATABASE = {
     menus: [],
     menuContainers: [],
     pages: [],
-    views: [],
-    components: [],
-    attrs: [],
-    events: [],
     artifacts: []
   }
 }

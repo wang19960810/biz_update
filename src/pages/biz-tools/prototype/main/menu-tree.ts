@@ -221,11 +221,12 @@ const seedMenuList: MenuItem[] = [
  * 数据库同时保存系统字段和 PageBuilder 字段，但前端恢复时会重新整理成 MenuItem。
  */
 interface PageBuilderDatabaseMenuRecord {
-  menuId?: string
-  menuCode?: string
-  menuName?: string
-  fileName?: string
-  parentMenuCode?: string
+    menuId?: string
+    menuCode?: string
+    menuName?: string
+    fileName?: string
+    pageId?: string
+    parentMenuCode?: string
   resource?: string | null
   icon?: string | null
   sortIndex?: number | null
@@ -264,6 +265,7 @@ const normalizeDatabaseMenuList = (records: unknown): MenuItem[] => {
         code,
         comment: String(item.menuName ?? '').trim(),
         fileName: item.fileName || code,
+        pageId: item.pageId || '',
         parentCode: String(item.parentMenuCode ?? ''),
         resource: item.resource ?? '',
         icon: item.icon ?? null,
@@ -539,7 +541,7 @@ export const usePageBuilderMenuTree = () => {
     })
 
     flatMenuList.value = normalizePrimaryListFlags([...flatMenuList.value, nextItem])
-    checkedMenuIds.value = Array.from(new Set([...checkedMenuIds.value, nextItem.id]))
+    // 新增节点默认不加入同步勾选，是否同步必须由用户单独勾选复选框决定。
     selectedId.value = nextItem.id
     return nextItem
   }

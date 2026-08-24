@@ -1,0 +1,33 @@
+{
+  "pageId": "page_crm20260824042781",
+  "pageCode": "crm20260824042781",
+  "pageName": "页面1",
+  "fileName": "page1",
+  "builderType": "page",
+  "pageConfig": null,
+  "pageFolderName": "page1-1426",
+  "codeFolderName": "page1",
+  "pageType": "page",
+  "pageLayout": "table",
+  "hasTree": false,
+  "projectId": "proj_menu_8188",
+  "menuId": "menu-a49503aa-3286-4fb4-8a16-a537c2ddbcd2",
+  "dataPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page-data.json",
+  "routerFilePath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1/router.js",
+  "codeRootPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1",
+  "tableRootPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1/table",
+  "formRootPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1/form",
+  "componentRootPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/page1-1426/page1/component",
+  "targetPath": "src/pages/biz-tools/menu-8188/children/page1-1426",
+  "primaryListId": "menu-138b028f-c3f8-45f3-b240-229c8ca2801e",
+  "primaryListCode": "list1",
+  "hasPrimaryList": true,
+  "views": {
+    "table": "view_page_crm20260824042781_table_list1",
+    "tables": [
+      "view_page_crm20260824042781_table_list1"
+    ],
+    "forms": [],
+    "components": []
+  }
+}

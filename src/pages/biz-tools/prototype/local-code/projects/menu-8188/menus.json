@@ -1,0 +1,94 @@
+{
+  "projectId": "proj_menu_8188",
+  "projectCode": "menu-8188",
+  "projectName": "菜单",
+  "menus": [
+    {
+      "menuId": "menu-28985d4e-a009-4ccd-9aa1-75ba57fa548b",
+      "menuCode": "CRM20260823043171",
+      "menuName": "菜单",
+      "fileName": "menu",
+      "builderType": "folder",
+      "pageConfig": null,
+      "parentMenuCode": "",
+      "menuContainerPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188",
+      "menuChildrenPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children",
+      "pageId": "",
+      "resource": "",
+      "icon": null,
+      "submitStatus": "draft",
+      "checked": false,
+      "sortIndex": 1,
+      "children": [
+        {
+          "menuId": "menu-79bc5a25-e5f5-4547-a021-53412d1349d5",
+          "menuCode": "CRM20260823055147",
+          "menuName": "menu1",
+          "fileName": "menu1",
+          "builderType": "folder",
+          "pageConfig": null,
+          "parentMenuCode": "CRM20260823043171",
+          "menuContainerPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/menu1-2412",
+          "menuChildrenPath": "src/pages/biz-tools/prototype/local-code/projects/menu-8188/children/menu1-2412/children",
+          "pageId": "",
+          "resource": "",
+          "icon": null,
+          "submitStatus": "draft",
+          "checked": false,
+          "sortIndex": 1,
+          "children": []
+        },
+        {
+          "menuId": "menu-a49503aa-3286-4fb4-8a16-a537c2ddbcd2",
+          "menuCode": "CRM20260824042781",
+          "menuName": "页面1",
+          "fileName": "page1",
+          "builderType": "page",
+          "pageConfig": null,
+          "parentMenuCode": "CRM20260823043171",
+          "menuContainerPath": "",
+          "menuChildrenPath": "",
+          "pageId": "page_crm20260824042781",
+          "resource": "",
+          "icon": null,
+          "submitStatus": "draft",
+          "checked": false,
+          "sortIndex": 2,
+          "children": [
+            {
+              "menuId": "menu-138b028f-c3f8-45f3-b240-229c8ca2801e",
+              "menuCode": "list1",
+              "menuName": "main_list",
+              "fileName": "list1",
+              "builderType": "list",
+              "pageConfig": {
+                "apiUrl": null,
+                "apiUrlRequestMapping": "",
+                "configSource": "",
+                "configSourceName": "",
+                "functionCode": "list1",
+                "functionName": "main_list",
+                "functionType": "1",
+                "parentCode": "CRM20260824042781",
+                "parentName": "main_list",
+                "remark": "",
+                "systemOfConfigSource": "",
+                "isPrimaryList": true
+              },
+              "parentMenuCode": "CRM20260824042781",
+              "menuContainerPath": "",
+              "menuChildrenPath": "",
+              "pageId": "",
+              "resource": "",
+              "icon": null,
+              "submitStatus": "draft",
+              "checked": false,
+              "sortIndex": 1,
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

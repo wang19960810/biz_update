@@ -15,10 +15,6 @@ const createBuildState = generationIds => {
     projects: [],
     menus: [],
     pages: [],
-    views: [],
-    components: [],
-    attrs: [],
-    events: [],
     artifacts: [],
     menuContainers: [],
     generatedFiles: [],
@@ -77,7 +73,7 @@ export const buildDatabaseFromMenus = async payload => {
 
   const menus = normalizedMenus.map(menu => {
     const treeNode = nodeMap.get(menu.id)
-    const pageNode = treeNode ? findOwningPageNode(nodeMap, treeNode) : null
+    const pageNode = treeNode ? findOwningPageNode(codeMap, treeNode) : null
     const page = pageNode ? state.pages.find(item => item.pageId === pageNode.pageId) : null
     const rootNode = findRootNode(nodeMap, treeNode)
     const project = state.projects.find(item => item.menuRootId === rootNode?.id)
@@ -126,7 +122,7 @@ export const buildDatabaseFromMenus = async payload => {
   }))
 
   const database = {
-    version: '2.5.0',
+    version: '2.7.0',
     rootDir: 'src/pages/biz-tools/prototype/local-code',
     projectRootDir: 'src/pages/biz-tools/prototype/local-code/projects',
     tables: {
@@ -134,10 +130,6 @@ export const buildDatabaseFromMenus = async payload => {
       menus,
       menuContainers: state.menuContainers,
       pages,
-      views: state.views,
-      components: state.components,
-      attrs: state.attrs,
-      events: state.events,
       artifacts: state.artifacts
     }
   }

@@ -24,6 +24,7 @@ export interface MenuItem {
     fileName: string // 可复制代码内层文件夹名
     builderType: PageBuilderMenuType // PageBuilder 节点类型：页面、列表、表单或文件夹
     pageConfig?: PageConfig | null // 列表/表单对应的页面配置，页面和文件夹为空
+    pageId?: string // 本地页面映射 ID，列表/表单通过它关联所属页面
     tag: string | null // 本地业务标签
     disable?: boolean // 是否禁用（新增数据不可选中标记）
     submitStatus?: 'draft' | 'submitted' // 同步状态：draft 未同步，submitted 已同步

@@ -6,6 +6,8 @@ import {
   handleDatabase,
   handleExport,
   handleLocalStatus,
+  handlePageData,
+  handlePageDataUpdate,
   handleSync
 } from './page-builder/server-handlers.mjs'
 
@@ -31,6 +33,18 @@ const server = http.createServer(async (request, response) => {
 
     if (request.method === 'GET' && url.pathname === '/page-builder/database') {
       await handleDatabase(request, response)
+      return
+    }
+
+    if (request.method === 'GET' && url.pathname.startsWith('/page-builder/page-data/')) {
+      const pageId = decodeURIComponent(url.pathname.slice('/page-builder/page-data/'.length))
+      await handlePageData(pageId, response)
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname.startsWith('/page-builder/page-data/')) {
+      const pageId = decodeURIComponent(url.pathname.slice('/page-builder/page-data/'.length))
+      await handlePageDataUpdate(pageId, request, response)
       return
     }
 

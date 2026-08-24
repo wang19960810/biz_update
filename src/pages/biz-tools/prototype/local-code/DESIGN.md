@@ -9,7 +9,7 @@
 
 ## 核心原则
 
-- `database.json` 是本地数据库。
+- `database.json` 是本地全局索引数据库，当前结构版本为 `2.7.0`。
 - 文件系统是派生结果，所有路径都能从数据库反查。
 - `render.json` 只给本地预览用。
 - 可复制代码固定落到 `router.js / table / form / component`，每个列表都按文件名称生成独立目录；其中 `form` 和 `component` 支持多个子文件按名称生成。
@@ -56,48 +56,54 @@ local-code/
 
 ## 本地数据库
 
-`database.json` 按“表”组织，表之间只保存 ID、文件名和路径。
+`database.json` 按“表”组织，作为全局索引库。页面级的 views、components、attrs、events 不再全部堆在这里，而是通过 `pages.dataPath` 指向页面目录下的 `page-data.json`。
 
 | 表名 | 作用 |
 | --- | --- |
 | `projects` | 项目主记录 |
 | `menus` | 菜单树、项目、页面和文件夹映射 |
-| `pages` | 页面主记录 |
-| `views` | 表格/表单预览记录 |
-| `components` | 标准/自定义组件实例 |
-| `attrs` | 属性记录 |
-| `events` | 事件记录 |
+| `pages` | 页面主记录和页面数据文件映射 |
 | `artifacts` | 可复制代码文件索引 |
 
 ## 关键字段
 
 - `projects`: `projectId`, `projectCode`, `projectName`, `rootPath`, `exportRootPath`, `status`
 - `menus`: `menuId`, `menuCode`, `menuName`, `fileName`, `parentMenuId`, `projectId`, `pageId`, `folderPath`, `targetPath`, `submitStatus`
-- `pages`: `pageId`, `pageCode`, `pageName`, `fileName`, `pageFolderName`, `codeFolderName`, `pageType`, `pageLayout`, `hasTree`, `projectId`, `menuId`, `pageRootPath`, `codeRootPath`, `routerFilePath`, `tableRootPath`, `primaryListId`, `primaryListCode`, `hasPrimaryList`
-- `views`: `viewId`, `pageId`, `menuId`, `viewCode`, `viewType`, `viewName`, `renderPath`, `exportPath`
-- `components`: `componentId`, `pageId`, `viewId`, `parentComponentId`, `componentType`, `componentCode`, `componentName`, `componentPath`, `exportPath`
-- `attrs`: `attrId`, `ownerType`, `ownerId`, `key`, `value`, `valueType`, `bindPath`
-- `events`: `eventId`, `ownerType`, `ownerId`, `name`, `handler`, `params`
-- `artifacts`: `ownerType`, `ownerId`, `pageId`, `menuId`, `fileRole`, `filePath`, `targetPath`, `copyable`
+- `pages`: `pageId`, `pageCode`, `pageName`, `fileName`, `pageFolderName`, `codeFolderName`, `pageType`, `pageLayout`, `hasTree`, `projectId`, `menuId`, `pageRootPath`, `dataPath`, `codeRootPath`, `routerFilePath`, `tableRootPath`, `primaryListId`, `primaryListCode`, `hasPrimaryList`
+
+页面目录下的 `page-data.json` 保存：
+
+- `views`: 当前页面的列表、表单和自定义组件视图
+- `components`: 当前页面的标准组件和自定义组件实例
+- `attrs`: 当前页面组件属性
+- `events`: 当前页面组件事件
+- `renderData.components`: 当前页面画布实际使用的本地组件配置
+
+`renderData.components` 和系统同步用的 `PageConfig` / `PageConfigDetail` 分开保存。
+前者允许扩展画布属性，后者只在同步测试环境时按接口字段组装，不能互相替代。
 
 ## 路径关系
 
 - `menu -> project`: 菜单属于哪个项目。
 - `menu -> page`: 菜单提交后对应哪个页面。
-- `page -> view(table/form)`: 页面下拆成表格和表单两套预览数据。
+- `page -> dataPath`: 页面主记录映射到自己的 `page-data.json`。
+- `page-data -> view(table/form)`: 页面数据中保存列表、表单和自定义组件视图。
 - `view -> component`: 视图下挂标准组件和自定义组件。
-- `component -> attrs/events`: 组件属性和事件独立存表。
+- `component -> attrs/events`: 组件属性和事件保存在同一个页面数据文件中。
 - `artifact -> targetPath`: 每个可复制文件都有最终目标路径。
 
 ## 生成流程
 
 1. 读取勾选菜单。
-2. 按父子顺序生成 `projects`、`menus`、`pages`、`views` 记录。
+2. 按父子顺序生成 `projects`、`menus`、`pages` 索引记录。
 3. 更新 `database.json`。
-4. 创建目录。
-5. 写入 `page.json`、`render.json`、`router.js`。
+4. 为每个页面创建独立目录。
+5. 写入 `page.json`、`page-data.json`、`render.json`、`router.js`。
 6. 生成 `table/`、`form/`、`component/` 下的可复制代码，并同步复制到 `targetPath`。
 7. 递归创建子页面。
+
+画布保存时只通过 `pages[].dataPath` 找到当前页面的 `page-data.json`，按 `menuId`
+替换当前列表或表单的 `renderData.components`，不会覆盖同页面其它实体。
 
 ## 直接复制
 

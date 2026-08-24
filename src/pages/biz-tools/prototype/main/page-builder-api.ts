@@ -2,6 +2,7 @@ import instance from '@src/server/index.ts'
 import { useServeStore } from '@src/store/serveStoreState.ts'
 
 import type { MenuItem, PageBuilderMenuType, PageConfig } from '@pages/biz-tools/types'
+import type { LocalComponentData } from './component-types'
 
 /**
  * 发送给系统菜单接口的字段。
@@ -118,6 +119,28 @@ export const updatePageBuilderLocalStatus = (payload: PageBuilderLocalStatusPayl
 
 export const loadPageBuilderDatabase = () => {
   return instance.get('/api/page-builder/database')
+}
+
+/**
+ * 根据页面 ID 读取页面级渲染数据。
+ */
+export const loadPageBuilderPageData = (pageId: string) => {
+  return instance.get(`/api/page-builder/page-data/${encodeURIComponent(pageId)}`)
+}
+
+/**
+ * 保存当前页面某个实体的本地画布组件。
+ *
+ * menuId 用于局部替换，服务端会保留同一页面其它列表、表单和组件的数据。
+ */
+export const savePageBuilderPageData = (
+  pageId: string,
+  payload: {
+    menuId: string
+    components: LocalComponentData[]
+  }
+) => {
+  return instance.post(`/api/page-builder/page-data/${encodeURIComponent(pageId)}`, payload)
 }
 
 /**

@@ -21,6 +21,7 @@ export const buildPageJson = (
     hasTree: page.hasTree,
     projectId: project.projectId,
     menuId: node.id,
+    dataPath: page.dataPath,
     routerFilePath: page.routerFilePath,
     codeRootPath: page.codeRootPath,
     tableRootPath: page.tableRootPath,

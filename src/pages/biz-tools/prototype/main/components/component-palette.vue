@@ -28,6 +28,16 @@
       @close="resetTableConfig"
     >
       <el-form ref="tableFormRef" :model="tableConfig" label-width="100px" size="small">
+        <el-form-item label="列数量" required>
+          <el-input-number
+            v-model="tableConfig.columnCount"
+            :min="1"
+            :max="20"
+            controls-position="right"
+            class="column-count-input"
+          />
+        </el-form-item>
+
         <el-form-item label="选择模式" required>
           <el-radio-group v-model="tableConfig.selectionMode">
             <el-radio value="none">无</el-radio>
@@ -37,37 +47,39 @@
         </el-form-item>
 
         <el-form-item label="列配置" required>
-          <el-button size="small" @click="addColumn">添加列</el-button>
+          <span class="config-tip">请填写每一列的名称和字段名</span>
         </el-form-item>
 
-        <div v-for="(col, index) in tableConfig.columns" :key="index" class="column-config-row">
-          <el-input
-            v-model="col.label"
-            placeholder="列名称"
-            size="small"
-            style="width: 140px; margin-right: 8px"
-          />
-          <el-input
-            v-model="col.prop"
-            placeholder="字段名"
-            size="small"
-            style="width: 140px; margin-right: 8px"
-          />
-          <el-input-number
-            v-model="col.width"
-            placeholder="宽度"
-            size="small"
-            :min="60"
-            style="width: 100px; margin-right: 8px"
-          />
-          <el-button
-            size="small"
-            type="danger"
-            text
-            @click="removeColumn(index)"
-          >
-            删除
-          </el-button>
+        <div class="column-config-list">
+          <div v-for="(col, index) in tableConfig.columns" :key="index" class="column-config-row">
+            <el-input
+              v-model="col.label"
+              placeholder="列名称"
+              size="small"
+              style="width: 140px; margin-right: 8px"
+            />
+            <el-input
+              v-model="col.prop"
+              placeholder="字段名"
+              size="small"
+              style="width: 140px; margin-right: 8px"
+            />
+            <el-input-number
+              v-model="col.width"
+              placeholder="宽度"
+              size="small"
+              :min="60"
+              style="width: 100px; margin-right: 8px"
+            />
+            <el-button
+              size="small"
+              type="danger"
+              text
+              @click="removeColumn(index)"
+            >
+              删除
+            </el-button>
+          </div>
         </div>
       </el-form>
 
@@ -80,9 +92,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { Grid } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import type {
+  ComponentCreatePayload,
+  TableComponentConfig
+} from '../component-types'
 
 type BuilderType = 'list' | 'form'
 
@@ -104,7 +120,7 @@ const components: PaletteComponent[] = [
 ]
 
 const emit = defineEmits<{
-  (event: 'create', payload: { type: string; config: TableConfig }): void
+  (event: 'create', payload: ComponentCreatePayload): void
 }>()
 
 // 将组件类型写入拖拽数据，供中央画布识别要创建的组件。
@@ -119,30 +135,30 @@ const handleDragStart = (event: DragEvent, comp: PaletteComponent) => {
 const tableConfigVisible = ref(false)
 const tableFormRef = ref<any>(null)
 
-interface ColumnConfig {
-  label: string
-  prop: string
-  width?: number
-}
-
-interface TableConfig {
-  selectionMode: 'none' | 'single' | 'multiple'
-  columns: ColumnConfig[]
-}
-
-const tableConfig = reactive<TableConfig>({
+const tableConfig = reactive<TableComponentConfig & { columnCount: number }>({
+  columnCount: 3,
   selectionMode: 'none',
   columns: []
 })
 
-// 为列表配置新增一行列定义。
-const addColumn = () => {
-  tableConfig.columns.push({
-    label: '',
-    prop: '',
-    width: undefined
-  })
+// 根据列数量补齐或裁剪列定义，保留用户已经填写的内容。
+const syncColumnCount = (count: number) => {
+  while (tableConfig.columns.length < count) {
+    tableConfig.columns.push({
+      label: `列${tableConfig.columns.length + 1}`,
+      prop: `field${tableConfig.columns.length + 1}`,
+      width: undefined
+    })
+  }
+
+  if (tableConfig.columns.length > count) {
+    tableConfig.columns.splice(count)
+  }
 }
+
+watch(() => tableConfig.columnCount, count => {
+  syncColumnCount(Number(count) || 1)
+})
 
 // 删除指定下标的列表列定义。
 const removeColumn = (index: number) => {
@@ -151,8 +167,10 @@ const removeColumn = (index: number) => {
 
 // 清空列表配置，保证下一次拖拽从全新的配置开始。
 const resetTableConfig = () => {
+  tableConfig.columnCount = 3
   tableConfig.selectionMode = 'none'
   tableConfig.columns = []
+  syncColumnCount(tableConfig.columnCount)
 }
 
 // 校验列表配置并通知主画布创建列表组件。
@@ -195,7 +213,9 @@ defineExpose({
 .component-palette {
   display: flex;
   flex-direction: column;
-  width: 240px;
+  flex: 0 0 240px;
+  min-width: 240px;
+  min-height: 0;
   height: 100%;
   background: #fff;
   border-right: 1px solid #e8ecf1;
@@ -277,6 +297,23 @@ defineExpose({
 .column-config-row {
   display: flex;
   align-items: center;
+  min-width: 0;
   margin-bottom: 10px;
+}
+
+.column-config-list {
+  max-height: min(42vh, 360px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 8px 2px 0;
+}
+
+.column-count-input {
+  width: 180px;
+}
+
+.config-tip {
+  color: #8a94a6;
+  font-size: 12px;
 }
 </style>

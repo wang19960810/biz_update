@@ -13,6 +13,19 @@ import { renderComponentVue } from './renderers/component-renderer.mjs'
 import { renderFormVue } from './renderers/form-renderer.mjs'
 import { renderTableJs, renderTableVue } from './renderers/table-renderer.mjs'
 
+// 合并页面重新生成的元数据和之前已经保存的本地画布数据。
+const mergePageData = (generatedPageData, previousPageData) => {
+  const previousComponents = previousPageData?.renderData?.components
+
+  return {
+    ...generatedPageData,
+    renderData: {
+      version: '1.0.0',
+      components: Array.isArray(previousComponents) ? previousComponents : []
+    }
+  }
+}
+
 // 创建菜单目录容器，不生成页面文件。
 export const writeMenuContainers = async menuContainers => {
   for (const container of menuContainers) {
@@ -67,7 +80,7 @@ export const exportCopyableFiles = async database => {
 }
 
 // 写入页面、表格、表单和自定义组件的所有本地文件。
-export const writePageFiles = async bundle => {
+export const writePageFiles = async (bundle, previousPageData = null) => {
   const {
     pageFolder,
     codeFolder,
@@ -79,9 +92,11 @@ export const writePageFiles = async bundle => {
     primaryTable,
     formSpecs,
     componentSpecs,
+    pageData: generatedPageData,
     page
   } = bundle
   const { project, node } = bundle
+  const pageData = mergePageData(generatedPageData, previousPageData)
 
   await ensureDir(pageFolder)
   await ensureDir(sharedFolder)
@@ -107,6 +122,8 @@ export const writePageFiles = async bundle => {
     path.join(pageFolder, 'page.json'),
     buildPageJson(page, project, node, tableSpecs, formSpecs, componentSpecs)
   )
+  // 页面级渲染数据独立保存，组件数量增长时不会继续膨胀 database.json。
+  await writeJsonFile(path.join(pageFolder, 'page-data.json'), pageData)
   await writeJsonFile(path.join(sharedFolder, 'menu-map.json'), {
     projectId: project.projectId,
     projectCode: project.projectCode,
