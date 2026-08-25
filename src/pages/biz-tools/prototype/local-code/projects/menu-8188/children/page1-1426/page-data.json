@@ -110,26 +110,56 @@
         "componentType": "table",
         "componentName": "列表组件",
         "canvasConfig": {
-          "selectionMode": "none",
+          "selectionMode": "single",
           "columns": [
             {
               "label": "列1",
-              "prop": "field1"
+              "prop": "field1",
+              "visible": true,
+              "clickView": false,
+              "columnExport": true,
+              "fixed": "",
+              "search": true,
+              "statistic": false,
+              "searchType": "input",
+              "multilineSeparatorInfo": "",
+              "dictCode": "",
+              "displayOrder": 1
             },
             {
               "label": "列2",
-              "prop": "field2"
+              "prop": "field2",
+              "visible": true,
+              "clickView": false,
+              "columnExport": true,
+              "fixed": "",
+              "search": true,
+              "statistic": false,
+              "searchType": "input",
+              "multilineSeparatorInfo": "",
+              "dictCode": "",
+              "displayOrder": 2
             },
             {
               "label": "列3",
-              "prop": "field3"
+              "prop": "field3",
+              "visible": true,
+              "clickView": false,
+              "columnExport": true,
+              "fixed": "",
+              "search": true,
+              "statistic": false,
+              "searchType": "input",
+              "multilineSeparatorInfo": "",
+              "dictCode": "",
+              "displayOrder": 3
             }
           ]
         },
         "sortIndex": 0,
         "visible": true,
-        "createdAt": "2026-08-24T15:58:04.861Z",
-        "updatedAt": "2026-08-24T15:58:04.861Z"
+        "createdAt": "2026-08-25T18:03:39.700Z",
+        "updatedAt": "2026-08-25T18:03:39.700Z"
       }
     ]
   }

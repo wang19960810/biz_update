@@ -22,7 +22,7 @@ export interface PageConfig {
  */
 export interface PageConfigDetail {
     columnExport: string // 是否导出 '0':不导出 '1':导出
-    dictCode: null // 数据字典
+    dictCode: null | string // 数据字典
     editView: null | string // 是否可以编辑
     editableInCreate: string // 新增时是否可以编辑
     editableInEdit: string // 编辑时是否可以编辑
@@ -49,13 +49,13 @@ export interface PageConfigDetail {
     isLimited: boolean
     multilineSeparatorInfo: string
     props: null
-    refresh: false
+    refresh: boolean
     requestSearch: null
     requestUrl: null
-    required: true
+    required: boolean
     searchType: string
-    showOverflow: true
+    showOverflow: boolean
     validate: null
-    visible: true
+    visible: boolean
 
 }

@@ -1,5 +1,12 @@
 import type { MenuItem } from '@pages/biz-tools/types'
-import type { CanvasComponent, LocalComponentData, TableComponentConfig } from './component-types'
+import { normalizeTableColumnConfig } from './component-presets'
+import type {
+  CanvasComponent,
+  CanvasComponentConfig,
+  CanvasComponentType,
+  LocalComponentData,
+  TableComponentConfig
+} from './component-types'
 
 /**
  * 从画布组件生成本地数据库存储记录。
@@ -16,9 +23,9 @@ export const createLocalComponentData = (
     componentId,
     menuId: menu.id,
     pageId,
-    componentType: component.type === 'table' ? 'table' : 'custom',
-    componentName: component.type === 'table' ? '列表组件' : '组件',
-    canvasConfig: component.config,
+    componentType: component.type,
+    componentName: component.name,
+    canvasConfig: component.config as CanvasComponentConfig,
     sortIndex: 0,
     visible: true,
     createdAt: now,
@@ -30,11 +37,23 @@ export const createLocalComponentData = (
  * 从本地数据库记录恢复画布组件。
  */
 export const restoreCanvasComponent = (data: LocalComponentData): CanvasComponent => {
+  const config = data.componentType === 'table' && data.canvasConfig && typeof data.canvasConfig === 'object'
+    ? {
+        ...(data.canvasConfig as TableComponentConfig),
+        columns: Array.isArray((data.canvasConfig as TableComponentConfig).columns)
+          ? (data.canvasConfig as TableComponentConfig).columns.map((column, index) =>
+              normalizeTableColumnConfig(column, index + 1)
+            )
+          : []
+      }
+    : (data.canvasConfig as CanvasComponentConfig)
+
   return {
     id: data.componentId,
     componentId: data.componentId,
-    type: data.componentType === 'table' ? 'table' : 'table',
-    config: data.canvasConfig as TableComponentConfig,
+    type: data.componentType as CanvasComponentType,
+    name: data.componentName || '组件',
+    config,
     saved: true
   }
 }
@@ -52,23 +71,23 @@ export const createPageConfigDetailsFromTable = (
   const config = component.config as TableComponentConfig
 
   return config.columns.map((column, index) => ({
-    columnExport: '1', // 默认允许导出
-    dictCode: null,
-    editView: null,
-    editableInCreate: '1', // 默认新增时可编辑
-    editableInEdit: '1', // 默认编辑时可编辑
+    columnExport: column.columnExport === false ? '0' : '1',
+    dictCode: column.dictCode ? column.dictCode : null,
+    editView: column.clickView ? '1' : null,
+    editableInCreate: '1',
+    editableInEdit: '1',
     entityFieldName: column.prop,
     field: column.prop,
     title: column.label,
-    fixed: null,
-    formorder: String(index + 1),
+    fixed: column.fixed || null,
+    formorder: String(column.displayOrder || index + 1),
     functionCode: menu.code,
     parentCode: parentMenu.code,
-    search: null,
-    type: 'input', // 默认输入框类型
-    visibleInEdit: '1',
-    visibleInLook: '1',
-    width: column.width ? String(column.width) : '150',
+    search: column.search ? '1' : null,
+    type: column.searchType || 'input',
+    visibleInEdit: column.visible === false ? '0' : '1',
+    visibleInLook: column.visible === false ? '0' : '1',
+    width: column.width !== undefined ? String(column.width) : '',
     align: null,
     className: null,
     col: null,
@@ -78,15 +97,15 @@ export const createPageConfigDetailsFromTable = (
     formvalue: null,
     id: '', // 新增时为空，后端会生成
     isLimited: false,
-    multilineSeparatorInfo: '',
+    multilineSeparatorInfo: column.multilineSeparatorInfo || '',
     props: null,
     refresh: false,
     requestSearch: null,
     requestUrl: null,
     required: true,
-    searchType: 'input',
+    searchType: column.searchType || 'input',
     showOverflow: true,
     validate: null,
-    visible: true
+    visible: column.visible !== false
   }))
 }

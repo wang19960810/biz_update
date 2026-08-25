@@ -7,10 +7,11 @@
     <el-scrollbar class="palette-body">
       <div class="component-list">
         <div
-          v-for="comp in components"
+          v-for="comp in visibleItems"
           :key="comp.type"
           class="component-item"
           draggable="true"
+          @click="handleItemClick(comp.type)"
           @dragstart="handleDragStart($event, comp)"
         >
           <el-icon class="component-icon">
@@ -92,44 +93,53 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
-import { Grid } from '@element-plus/icons-vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+
+import {
+  componentPaletteItems,
+  createDefaultComponentConfig,
+  createDefaultTableColumnConfig
+} from '../component-presets'
 import type {
+  CanvasComponentType,
   ComponentCreatePayload,
   TableComponentConfig
 } from '../component-types'
+import type { ComponentPaletteItem } from '../component-presets'
 
-type BuilderType = 'list' | 'form'
-
-interface PaletteComponent {
-  type: string
-  label: string
-  icon: typeof Grid
-  availableFor: BuilderType[]
-}
-
-// 所有组件统一维护在一个数据源中；availableFor 用于区分列表和表单可用范围。
-const components: PaletteComponent[] = [
-  {
-    type: 'table',
-    label: '列表',
-    icon: Grid,
-    availableFor: ['list']
-  }
-]
+const props = defineProps<{
+  contextType: 'list' | 'form' | null
+}>()
 
 const emit = defineEmits<{
   (event: 'create', payload: ComponentCreatePayload): void
 }>()
 
+const visibleItems = computed(() => {
+  return componentPaletteItems.filter(item => item.availableFor.includes(props.contextType || 'list'))
+})
+
 // 将组件类型写入拖拽数据，供中央画布识别要创建的组件。
-const handleDragStart = (event: DragEvent, comp: PaletteComponent) => {
+const handleDragStart = (event: DragEvent, comp: ComponentPaletteItem) => {
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'copy'
     event.dataTransfer.setData('component-type', comp.type)
     event.dataTransfer.setData('application/x-page-builder-component', comp.type)
   }
+}
+
+// 点击卡片时，列表走配置弹窗，按钮和自定义表头直接创建默认组件。
+const handleItemClick = (type: CanvasComponentType) => {
+  if (type === 'table') {
+    openTableConfig()
+    return
+  }
+
+  emit('create', {
+    type,
+    config: createDefaultComponentConfig(type)
+  })
 }
 
 const tableConfigVisible = ref(false)
@@ -144,11 +154,7 @@ const tableConfig = reactive<TableComponentConfig & { columnCount: number }>({
 // 根据列数量补齐或裁剪列定义，保留用户已经填写的内容。
 const syncColumnCount = (count: number) => {
   while (tableConfig.columns.length < count) {
-    tableConfig.columns.push({
-      label: `列${tableConfig.columns.length + 1}`,
-      prop: `field${tableConfig.columns.length + 1}`,
-      width: undefined
-    })
+    tableConfig.columns.push(createDefaultTableColumnConfig(tableConfig.columns.length + 1))
   }
 
   if (tableConfig.columns.length > count) {
@@ -272,16 +278,6 @@ defineExpose({
   cursor: grabbing;
 }
 
-.component-item.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.component-item.disabled:hover {
-  background: #f7f9fc;
-  border-color: #e8ecf1;
-}
-
 .component-icon {
   font-size: 24px;
   color: #1677ff;
@@ -292,6 +288,7 @@ defineExpose({
   color: #172033;
   font-weight: 500;
   line-height: 1.4;
+  text-align: center;
 }
 
 .column-config-row {

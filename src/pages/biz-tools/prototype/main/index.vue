@@ -24,6 +24,7 @@
     <ComponentPalette
       v-if="showComponentPalette"
       ref="componentPaletteRef"
+      :context-type="paletteContextType"
       @create="handleComponentCreate"
     />
 
@@ -55,44 +56,78 @@
       <div
         class="canvas-area"
         :class="{ 'is-dragging': canvasDragActive }"
+        @pointerdown.capture="handleCanvasAreaPointerDown"
         @dragover.prevent="handleCanvasDragOver"
         @dragleave="handleCanvasDragLeave"
+        @click="handleCanvasAreaClick"
         @drop.prevent="handleCanvasDrop"
       >
         <div v-if="showCanvas" class="canvas-content">
           <div v-if="!currentCanvasComponents.length" class="drop-placeholder">
             <el-icon :size="42"><Plus /></el-icon>
             <strong>拖动组件到这里</strong>
-            <span>从左侧选择“列表”，拖入后配置列数量和选择模式</span>
+            <span>从左侧选择组件，拖入后开始编辑属性</span>
           </div>
 
           <div
             v-for="component in currentCanvasComponents"
             :key="component.id"
             class="canvas-component-card"
+            :class="{ 'is-selected': selectedCanvasComponent?.id === component.id }"
+            @click="handleCanvasComponentClick(component.id)"
           >
-            <div class="canvas-component-head">
-              <div>
-                <span class="component-type-label">列表</span>
-                <strong>列表组件</strong>
-              </div>
-              <span class="selection-label">{{ selectionModeLabel(component.config.selectionMode) }}</span>
-            </div>
+            <template v-if="component.type === 'table'">
+              <el-table
+                :data="getPreviewRows(component)"
+                border
+                stripe
+                size="small"
+                class="canvas-table"
+                @header-click="handleTableHeaderClick(component, $event)"
+              >
+                <el-table-column
+                  v-if="getTableSelectionMode(component) !== 'none'"
+                  type="selection"
+                  width="48"
+                />
+                <el-table-column
+                  v-for="column in getVisibleTableColumns(component)"
+                  :key="column.prop"
+                  :prop="column.prop"
+                  :label="column.label"
+                  :width="column.width"
+                  :min-width="column.minWidth"
+                  :fixed="column.fixed || undefined"
+                />
+              </el-table>
+            </template>
 
-            <el-table :data="getPreviewRows(component)" border stripe size="small" class="canvas-table">
-              <el-table-column
-                v-if="component.config.selectionMode !== 'none'"
-                type="selection"
-                width="48"
-              />
-              <el-table-column
-                v-for="column in component.config.columns"
-                :key="column.prop"
-                :prop="column.prop"
-                :label="column.label"
-                :width="column.width"
-              />
-            </el-table>
+            <template v-else-if="component.type === 'button'">
+              <div class="button-preview">
+                <el-button
+                  v-for="btn in getButtonItems(component)"
+                  :key="btn.buttonCode"
+                  size="small"
+                  :type="btn.buttonType === 'primary' ? 'primary' : 'default'"
+                >
+                  {{ btn.buttonName }}
+                </el-button>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="header-preview">
+                <div class="header-preview-main">
+                  <strong>{{ getHeaderTitle(component) }}</strong>
+                  <p>{{ getHeaderDescription(component) }}</p>
+                </div>
+                <div class="header-preview-stats">
+                  <span v-for="stat in getHeaderStats(component)" :key="stat.label" class="header-stat">
+                    {{ stat.label }} <strong>{{ stat.value }}</strong>
+                  </span>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
         <div v-else class="empty-placeholder">
@@ -101,57 +136,15 @@
         </div>
       </div>
     </main>
-    <aside v-if="showPropertyPanel" class="right-panel">
-      <div class="panel-header">
-        <span>属性设置</span>
-      </div>
-
-      <el-scrollbar class="panel-body">
-        <!-- 分组：通用设置 -->
-        <div class="config-section">
-          <h3 class="section-title">基础信息</h3>
-          <el-form label-position="top" size="small">
-            <el-form-item label="组件名称">
-              <el-input v-model="formData.name" />
-            </el-form-item>
-            <el-form-item label="唯一标识 (ID)">
-              <el-input v-model="formData.id" disabled />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- 分组：样式设置 -->
-        <div class="config-section">
-          <h3 class="section-title">样式配置</h3>
-          <el-form label-position="top" size="small">
-            <el-form-item label="背景颜色">
-              <el-color-picker v-model="formData.bgColor" show-alpha />
-            </el-form-item>
-
-            <el-form-item label="圆角大小 (px)">
-              <el-slider v-model="formData.borderRadius" :max="50" show-input />
-            </el-form-item>
-
-            <el-form-item label="透明度">
-              <el-slider v-model="formData.opacity" :max="100" />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- 分组：数据源 -->
-        <div class="config-section">
-          <h3 class="section-title">数据绑定</h3>
-          <el-form label-position="top" size="small">
-            <el-form-item label="数据接口 URL">
-              <el-input v-model="formData.apiUrl" placeholder="/api/data/dashboard" />
-            </el-form-item>
-            <el-form-item label="刷新频率 (秒)">
-              <el-input-number v-model="formData.refreshRate" :min="1" />
-            </el-form-item>
-          </el-form>
-        </div>
-      </el-scrollbar>
-    </aside>
+    <ComponentPropertyPanel
+      v-if="showPropertyPanel"
+      :component="selectedCanvasComponent"
+      :page-config="selectedMenu?.pageConfig || null"
+      :table-column-index="selectedCanvasComponent ? getSelectedTableColumnIndex(selectedCanvasComponent) : 0"
+      :collapsed="propertyPanelCollapsed"
+      @update:table-column-index="handleTableColumnIndexChange"
+      @update:collapsed="handlePropertyPanelCollapsedChange"
+    />
   </div>
 </template>
 
@@ -162,8 +155,24 @@ import { ElMessage } from 'element-plus'
 import type { MenuItem } from '@pages/biz-tools/types'
 import MenuTreePanel from './components/menu-tree-panel.vue'
 import ComponentPalette from './components/component-palette.vue'
-import type { CanvasComponent, ComponentCreatePayload } from './component-types'
-import { createLocalComponentData, restoreCanvasComponent } from './component-storage'
+import ComponentPropertyPanel from './components/component-property-panel.vue'
+import type {
+  ButtonComponentConfig,
+  CanvasComponent,
+  CanvasComponentType,
+  ComponentCreatePayload,
+  HeaderComponentConfig,
+  TableComponentConfig
+} from './component-types'
+import {
+  createLocalComponentData,
+  restoreCanvasComponent
+} from './component-storage'
+import {
+  createDefaultComponentConfig,
+  createDefaultComponentName,
+  getComponentTypeLabel
+} from './component-presets'
 import {
   loadPageBuilderPageData,
   savePageBuilderPageData
@@ -187,6 +196,10 @@ const componentPaletteRef = ref<InstanceType<typeof ComponentPalette> | null>(nu
 const selectedMenu = ref<MenuItem | null>(null)
 // 当前页面的画布组件，按菜单 ID 分组，切换菜单时不会丢失本次编辑结果。
 const canvasComponentsByMenu = reactive<Record<string, CanvasComponent[]>>({})
+const selectedComponentIdByMenu = reactive<Record<string, string>>({})
+// 按组件实例记录当前选中的列表列，画布表头和右侧属性面板共用这个状态。
+const selectedTableColumnIndexByComponent = reactive<Record<string, number>>({})
+const propertyPanelCollapsed = ref(false)
 const canvasDragActive = ref(false)
 const saving = ref(false)
 const loadedPageIds = new Set<string>()
@@ -208,6 +221,7 @@ const resolvePageId = (menu: MenuItem) => {
 // 处理菜单树选中事件。
 const handleMenuSelect = (menu: MenuItem | null) => {
   selectedMenu.value = menu
+  propertyPanelCollapsed.value = false
 
   // 切换菜单时，如果当前菜单还没有加载组件，尝试从数据库恢复。
   // 菜单节点本身没有页面数据，只有页面、列表、表单才需要加载画布。
@@ -216,11 +230,113 @@ const handleMenuSelect = (menu: MenuItem | null) => {
   }
 }
 
+// 选择画布中的某个组件，右侧属性面板随之联动。
+const selectCanvasComponent = (componentId: string) => {
+  const menuId = selectedMenu.value?.id
+
+  if (!menuId) {
+    return
+  }
+
+  selectedComponentIdByMenu[menuId] = componentId
+}
+
+// 点击组件时默认展开属性面板，方便直接编辑。
+const handleCanvasComponentClick = (componentId: string) => {
+  propertyPanelCollapsed.value = false
+  selectCanvasComponent(componentId)
+}
+
+// 点击画布空白处收起属性面板。
+const handleCanvasAreaPointerDown = (event: PointerEvent) => {
+  const target = event.target as HTMLElement | null
+
+  if (target?.closest('.canvas-component-card')) {
+    return
+  }
+
+  propertyPanelCollapsed.value = true
+}
+
+// 兜底处理普通 click，保证某些浏览器/组件组合下也能收起。
+const handleCanvasAreaClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null
+
+  if (target?.closest('.canvas-component-card')) {
+    return
+  }
+
+  propertyPanelCollapsed.value = true
+}
+
+// 统一处理属性面板的折叠状态更新，避免模板里直接赋值。
+const handlePropertyPanelCollapsedChange = (collapsed: boolean) => {
+  propertyPanelCollapsed.value = collapsed
+}
+
+// 获取当前列表组件在画布上选中的列下标。
+const getSelectedTableColumnIndex = (component: CanvasComponent) => {
+  return selectedTableColumnIndexByComponent[component.id] ?? 0
+}
+
+// 点击画布列表表头时，切换右侧属性面板到对应列。
+const handleTableHeaderClick = (
+  component: CanvasComponent,
+  column: { property?: string }
+) => {
+  selectCanvasComponent(component.id)
+
+  const property = String(column?.property || '')
+  const index = getTableColumns(component).findIndex(item => item.prop === property)
+
+  if (index >= 0) {
+    selectedTableColumnIndexByComponent[component.id] = index
+  }
+}
+
+// 右侧属性面板切换列时，同步回画布状态，保证再次点击组件后仍然定位到当前列。
+const handleTableColumnIndexChange = (index: number) => {
+  const component = selectedCanvasComponent.value
+
+  if (component?.type === 'table') {
+    selectedTableColumnIndexByComponent[component.id] = index
+  }
+}
+
 // 当前选中菜单对应的画布组件列表。
 const currentCanvasComponents = computed(() => {
   const menuId = selectedMenu.value?.id
   return menuId ? (canvasComponentsByMenu[menuId] || []) : []
 })
+
+// 当前菜单选中的画布组件。
+const selectedCanvasComponent = computed(() => {
+  const menuId = selectedMenu.value?.id
+
+  if (!menuId) {
+    return null
+  }
+
+  const selectedId = selectedComponentIdByMenu[menuId]
+  return currentCanvasComponents.value.find(item => item.id === selectedId) || currentCanvasComponents.value[0] || null
+})
+
+const paletteContextType = computed(() => {
+  if (selectedMenu.value?.builderType === 'form') {
+    return 'form' as const
+  }
+
+  if (selectedMenu.value?.builderType === 'list') {
+    return 'list' as const
+  }
+
+  return null
+})
+
+// 列表和表单页面才允许放置画布组件。
+const isCanvasTargetMenu = (menu: MenuItem | null) => {
+  return menu?.builderType === 'list' || menu?.builderType === 'form'
+}
 
 // 处理组件拖入画布上方的视觉状态。
 const handleCanvasDragOver = () => {
@@ -244,24 +360,32 @@ const handleCanvasDrop = (event: DragEvent) => {
   canvasDragActive.value = false
   const componentType = event.dataTransfer?.getData('component-type')
 
-  if (componentType !== 'table') {
+  if (componentType !== 'table' && componentType !== 'button' && componentType !== 'custom-header') {
     return
   }
 
-  if (!selectedMenu.value || selectedMenu.value.builderType !== 'list') {
-    ElMessage.warning('请先选择列表节点')
+  if (!isCanvasTargetMenu(selectedMenu.value)) {
+    ElMessage.warning('请先选择列表或表单节点')
     return
   }
 
-  componentPaletteRef.value?.openTableConfig()
+  if (componentType === 'table') {
+    componentPaletteRef.value?.openTableConfig()
+    return
+  }
+
+  handleComponentCreate({
+    type: componentType as CanvasComponentType,
+    config: createDefaultComponentConfig(componentType as CanvasComponentType)
+  })
 }
 
 // 配置完成后把组件实例放入当前页面画布。
 const handleComponentCreate = (payload: ComponentCreatePayload) => {
   const menuId = selectedMenu.value?.id
 
-  if (!menuId) {
-    ElMessage.warning('请先选择列表节点')
+  if (!isCanvasTargetMenu(selectedMenu.value) || !menuId) {
+    ElMessage.warning('请先选择列表或表单节点')
     return
   }
 
@@ -269,11 +393,49 @@ const handleComponentCreate = (payload: ComponentCreatePayload) => {
   const component: CanvasComponent = {
     id: `canvas_${payload.type}_${Date.now()}`,
     type: payload.type,
+    name: createDefaultComponentName(payload.type),
     config: payload.config
   }
 
   components.push(component)
-  ElMessage.success('列表组件已添加到画布')
+  selectedComponentIdByMenu[menuId] = component.id
+  ElMessage.success(`${getComponentTypeLabel(payload.type)}组件已添加到画布`)
+}
+
+// 从联合类型组件里读取列表配置，模板里不再直接访问联合属性。
+const getTableConfig = (component: CanvasComponent) => component.config as TableComponentConfig
+
+const getButtonConfig = (component: CanvasComponent) => component.config as ButtonComponentConfig
+
+const getHeaderConfig = (component: CanvasComponent) => component.config as HeaderComponentConfig
+
+const getTableSelectionMode = (component: CanvasComponent) => {
+  return component.type === 'table' ? getTableConfig(component).selectionMode : 'none'
+}
+
+const getTableColumns = (component: CanvasComponent) => {
+  return component.type === 'table' ? getTableConfig(component).columns : []
+}
+
+// 只渲染列表里开启显隐状态的列。
+const getVisibleTableColumns = (component: CanvasComponent) => {
+  return getTableColumns(component).filter(column => column.visible !== false)
+}
+
+const getButtonItems = (component: CanvasComponent) => {
+  return component.type === 'button' ? getButtonConfig(component).buttons : []
+}
+
+const getHeaderStats = (component: CanvasComponent) => {
+  return component.type === 'custom-header' ? getHeaderConfig(component).stats : []
+}
+
+const getHeaderTitle = (component: CanvasComponent) => {
+  return component.type === 'custom-header' ? getHeaderConfig(component).title : ''
+}
+
+const getHeaderDescription = (component: CanvasComponent) => {
+  return component.type === 'custom-header' ? getHeaderConfig(component).description : ''
 }
 
 // 从本地数据库加载当前菜单的组件。
@@ -300,9 +462,11 @@ const loadComponentsForMenu = async (menu: MenuItem) => {
       .filter((item: { menuId?: string }) => item.menuId === menu.id)
       .map(restoreCanvasComponent)
     loadedPageIds.add(pageId)
+    selectedComponentIdByMenu[menu.id] = canvasComponentsByMenu[menu.id]?.[0]?.id || ''
   } catch {
     // 页面还没有完成本地生成时，或者是菜单节点请求404，先展示空画布。
     canvasComponentsByMenu[menu.id] = []
+    selectedComponentIdByMenu[menu.id] = ''
   }
 }
 
@@ -355,15 +519,12 @@ const saveComponents = async () => {
   }
 }
 
-// 将选择模式转换成画布上的简洁提示。
-const selectionModeLabel = (mode: CanvasComponent['config']['selectionMode']) => {
-  return mode === 'multiple' ? '多选' : mode === 'single' ? '单选' : '无选择'
-}
-
 // 生成空数据行，让用户在画布中直接看到列结构。
 const getPreviewRows = (component: CanvasComponent) => {
+  const columns = getVisibleTableColumns(component)
+
   return Array.from({ length: 3 }, (_, rowIndex) => {
-    return Object.fromEntries(component.config.columns.map(column => [
+    return Object.fromEntries(columns.map(column => [
       column.prop,
       `${column.label || '列'} ${rowIndex + 1}`
     ]))
@@ -383,16 +544,6 @@ const showPropertyPanel = computed(() => {
   return showComponentPalette.value
 })
 
-// 中间画布右侧属性栏的示例数据。
-const formData = reactive({
-  name: '仪表盘主视图',
-  id: 'comp_dashboard_001',
-  bgColor: '#1a1a1a',
-  borderRadius: 12,
-  opacity: 100,
-  apiUrl: '',
-  refreshRate: 30
-})
 </script>
 
 <style scoped>
@@ -556,102 +707,62 @@ const formData = reactive({
   border: 1px solid #dfe6ef;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
+  cursor: pointer;
 }
 
-.canvas-component-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.canvas-component-head > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.component-type-label,
-.selection-label {
-  color: #1677ff;
-  font-size: 12px;
-}
-
-.selection-label {
-  color: #5f6b7a;
+.canvas-component-card.is-selected {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.12), 0 8px 24px rgba(31, 45, 61, 0.08);
 }
 
 .canvas-table {
   width: 100%;
 }
 
-.preview-card {
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  overflow: hidden;
-  background: #000;
-}
-
-.preview-img {
-  display: block;
-  max-width: 100%;
-  max-height: 80vh;
-}
-
-.play-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+.button-preview {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0,0,0,0.3);
-  color: white;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.3s;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.preview-card:hover .play-overlay {
-  opacity: 1;
+.header-preview {
+  padding: 14px 16px;
+  border: 1px dashed #d9e2ef;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fbfdff, #f8fbff);
 }
 
-/* --- 右侧属性面板 --- */
-.right-panel {
-  flex: 0 0 300px;
-  min-width: 300px;
-  min-height: 0;
-  background-color: #fff;
-  border-left: 1px solid #e4e7ed;
+.header-preview-main {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
-.panel-header {
-  height: 60px;
+.header-preview-main p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.header-preview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.header-stat {
+  padding: 6px 10px;
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  font-weight: bold;
-  border-bottom: 1px solid #e4e7ed;
+  gap: 6px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #3555aa;
+  font-size: 12px;
 }
 
-.panel-body {
-  padding: 20px;
-}
-
-.config-section {
-  margin-bottom: 30px;
-}
-
-.section-title {
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 15px;
-  font-weight: normal;
-}
-</style>
-/* 空状态占位 */
 .empty-placeholder {
   display: flex;
   flex-direction: column;
@@ -666,3 +777,4 @@ const formData = reactive({
   font-size: 14px;
   color: #8a94a6;
 }
+</style>

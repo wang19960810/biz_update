@@ -7,6 +7,17 @@ export interface TableColumnConfig {
   label: string
   prop: string
   width?: number
+  minWidth?: number
+  visible?: boolean
+  clickView?: boolean
+  columnExport?: boolean
+  fixed?: '' | 'left' | 'right'
+  search?: boolean
+  statistic?: boolean
+  searchType?: string
+  multilineSeparatorInfo?: string
+  dictCode?: string
+  displayOrder?: number
 }
 
 /**
@@ -20,11 +31,80 @@ export interface TableComponentConfig {
 }
 
 /**
+ * 按钮基础配置。
+ *
+ * 这里的字段尽量贴近系统页面按钮定义，方便后续直接映射同步字段。
+ */
+export interface ButtonItemConfig {
+  assignFunctionCode: string
+  buttonCode: string
+  buttonName: string
+  buttonOrder: number
+  buttonType: string
+  name: string
+  parentCode: string
+  type: string | null
+  visible: boolean
+  apiUrl?: string | null
+  ask?: string | null
+  buttonId?: string
+  buttonMethod?: string
+  buttonOperationType?: string | null
+  buttonTypeName?: string | null
+  code?: string
+  configCode?: string | null
+  doCode?: string | null
+  functionCode?: string
+  iconCode?: string
+  iconEffect?: string | null
+  iconName?: string | null
+  iconStyle?: string | null
+  iconUrl?: string | null
+  id?: string
+  queryUrl?: string | null
+}
+
+/**
+ * 按钮组件基础配置。
+ */
+export interface ButtonComponentConfig {
+  buttons: ButtonItemConfig[]
+}
+
+/**
+ * 自定义表头组件配置。
+ */
+export interface HeaderStatConfig {
+  label: string
+  value: string
+  tone?: string
+}
+
+export interface HeaderComponentConfig {
+  title: string
+  description: string
+  stats: HeaderStatConfig[]
+}
+
+/**
+ * 当前画布支持的组件类型。
+ */
+export type CanvasComponentType = 'table' | 'button' | 'custom-header'
+
+/**
+ * 画布组件配置的联合类型。
+ */
+export type CanvasComponentConfig =
+  | TableComponentConfig
+  | ButtonComponentConfig
+  | HeaderComponentConfig
+
+/**
  * 组件面板提交给画布的创建数据。
  */
 export interface ComponentCreatePayload {
-  type: 'table'
-  config: TableComponentConfig
+  type: CanvasComponentType
+  config: CanvasComponentConfig
 }
 
 /**
@@ -37,16 +117,16 @@ export interface LocalComponentData {
   componentId: string
   menuId: string
   pageId: string
-  componentType: 'table' | 'form' | 'custom'
+  componentType: CanvasComponentType
   componentName: string
-  
+
   // 画布配置（序列化为 JSON）
-  canvasConfig: TableComponentConfig | Record<string, unknown>
-  
+  canvasConfig: CanvasComponentConfig | Record<string, unknown>
+
   // UI 状态
   sortIndex: number
   visible: boolean
-  
+
   // 元数据
   createdAt: string
   updatedAt: string
@@ -61,7 +141,7 @@ export interface TableComponentExtendedConfig extends TableComponentConfig {
   apiUrlRequestMapping?: string
   configSource?: string
   remark?: string
-  
+
   // 列级扩展配置（未来可能需要）
   columnDetails?: Array<{
     field: string
@@ -82,7 +162,8 @@ export interface TableComponentExtendedConfig extends TableComponentConfig {
 export interface CanvasComponent {
   id: string // 临时 ID，用于画布内 v-for key
   componentId?: string // 持久化后的数据库 ID
-  type: ComponentCreatePayload['type']
-  config: TableComponentConfig
+  type: CanvasComponentType
+  name: string
+  config: CanvasComponentConfig
   saved?: boolean // 是否已保存到数据库
 }

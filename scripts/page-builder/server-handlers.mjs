@@ -56,7 +56,7 @@ const normalizeRenderComponents = (components, pageId) => {
       componentId: String(item.componentId || ''),
       menuId: String(item.menuId || ''),
       pageId,
-      componentType: ['table', 'form', 'custom'].includes(item.componentType)
+      componentType: ['table', 'button', 'custom-header', 'form', 'custom'].includes(item.componentType)
         ? item.componentType
         : 'custom',
       componentName: String(item.componentName || ''),

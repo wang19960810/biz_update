@@ -40,7 +40,7 @@
         "viewItem": 1,
         "disable": false,
         "submitStatus": "draft",
-        "checked": false,
+        "checked": true,
         "sortIndex": 1,
         "childrenMenuIds": [
           "menu-79bc5a25-e5f5-4547-a021-53412d1349d5",
@@ -71,7 +71,7 @@
         "viewItem": 1,
         "disable": false,
         "submitStatus": "draft",
-        "checked": false,
+        "checked": true,
         "sortIndex": 1,
         "childrenMenuIds": [],
         "updatedAt": "2026-08-24T15:41:17.497Z"
@@ -142,7 +142,7 @@
         "viewItem": 1,
         "disable": false,
         "submitStatus": "draft",
-        "checked": false,
+        "checked": true,
         "sortIndex": 1,
         "childrenMenuIds": [],
         "updatedAt": "2026-08-24T15:41:17.497Z"
