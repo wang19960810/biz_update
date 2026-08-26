@@ -69,8 +69,11 @@ export const createPageConfigDetailsFromTable = (
   parentMenu: MenuItem
 ): import('@pages/biz-tools/types').PageConfigDetail[] => {
   const config = component.config as TableComponentConfig
+  const selectionDetail = config.selectionMode === 'none'
+    ? null
+    : createSelectionPageConfigDetail(config.selectionMode, menu, parentMenu)
 
-  return config.columns.map((column, index) => ({
+  const columnDetails = config.columns.map((column, index) => ({
     columnExport: column.columnExport === false ? '0' : '1',
     dictCode: column.dictCode ? column.dictCode : null,
     editView: column.clickView ? '1' : null,
@@ -108,4 +111,53 @@ export const createPageConfigDetailsFromTable = (
     validate: null,
     visible: column.visible !== false
   }))
+
+  return selectionDetail ? [selectionDetail, ...columnDetails] : columnDetails
 }
+
+/**
+ * 将列表选择模式转换为系统约定的特殊列配置。
+ * 选择列只有 field 有业务含义，始终位于列表第一列且排序为 0。
+ */
+const createSelectionPageConfigDetail = (
+  selectionMode: TableComponentConfig['selectionMode'],
+  menu: MenuItem,
+  parentMenu: MenuItem
+): import('@pages/biz-tools/types').PageConfigDetail => ({
+  columnExport: '0',
+  dictCode: null,
+  editView: null,
+  editableInCreate: '0',
+  editableInEdit: '0',
+  entityFieldName: null,
+  field: selectionMode === 'single' ? 'checkTyperadio' : 'checkTypecheckbox',
+  title: '',
+  fixed: null,
+  formorder: '0',
+  functionCode: menu.code,
+  parentCode: parentMenu.code,
+  search: null,
+  type: '',
+  visibleInEdit: null,
+  visibleInLook: null,
+  width: '',
+  align: null,
+  className: null,
+  col: null,
+  formControl: null,
+  formon: null,
+  formoptions: null,
+  formvalue: null,
+  id: '',
+  isLimited: false,
+  multilineSeparatorInfo: '',
+  props: null,
+  refresh: false,
+  requestSearch: null,
+  requestUrl: null,
+  required: false,
+  searchType: '',
+  showOverflow: false,
+  validate: null,
+  visible: true
+})

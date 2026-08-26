@@ -64,7 +64,9 @@
       >
         <div v-if="showCanvas" class="canvas-content">
           <div v-if="!currentCanvasComponents.length" class="drop-placeholder">
-            <el-icon :size="42"><Plus /></el-icon>
+            <el-icon :size="42">
+              <component :is="icons.Plus" />
+            </el-icon>
             <strong>拖动组件到这里</strong>
             <span>从左侧选择组件，拖入后开始编辑属性</span>
           </div>
@@ -131,7 +133,9 @@
           </div>
         </div>
         <div v-else class="empty-placeholder">
-          <el-icon :size="80" color="#8a94a6"><FolderOpened /></el-icon>
+          <el-icon :size="80" color="#8a94a6">
+            <component :is="icons.FolderOpened" />
+          </el-icon>
           <p class="empty-text">请从左侧选择列表或表单节点开始设计页面</p>
         </div>
       </div>

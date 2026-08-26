@@ -19,10 +19,16 @@ import {
   snapshotLocalMenuList,
   snapshotSystemMenuList,
   exportPageBuilderCode,
+  loadPageBuilderPageData,
   syncPageBuilderMenusToTest,
   syncPageBuilderState,
   updatePageBuilderLocalStatus
 } from '../page-builder-api'
+import {
+  createPageConfigDetailsFromTable,
+  restoreCanvasComponent
+} from '../component-storage'
+import type { CanvasComponent } from '../component-types'
 
 const props = defineProps<{
   collapsed: boolean
@@ -492,8 +498,43 @@ const handleSetPrimaryList = async (node: MenuItem) => {
   }
 }
 
+/**
+ * 单独同步列表节点到测试环境，并打印列表页面配置提交参数。
+ * 页面配置详情当前只组装和核对，暂不改变既有页面配置接口操作。
+ */
+const handleSyncList = async (node: MenuItem) => {
+  if (node.builderType !== 'list') {
+    return
+  }
+
+  handleNodeClick(node)
+  syncing.value = true
+
+  try {
+    await printListPageConfigPayloads([node])
+    await syncPageBuilderMenusToTest([node])
+
+    const localStatusResponse = await updatePageBuilderLocalStatus({
+      syncedMenuIds: [node.id],
+      checkedMenuIds: [...checkedMenuIds.value]
+    })
+
+    if (localStatusResponse.data?.code === 0) {
+      markMenusSynced([node.id])
+      ElMessage.success(`「${node.comment}」已同步到测试环境`)
+    } else {
+      ElMessage.warning(`「${node.comment}」已同步到测试环境，但本地状态保存失败`)
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '列表同步失败'
+    ElMessage.error(message)
+  } finally {
+    syncing.value = false
+  }
+}
+
 const handleNodeAction = (
-  action: 'view' | 'add-child' | 'set-primary' | 'export-code' | 'edit' | 'delete',
+  action: 'view' | 'add-child' | 'set-primary' | 'sync-list' | 'export-code' | 'edit' | 'delete',
   node: MenuItem
 ) => {
   if (action === 'view') {
@@ -509,6 +550,11 @@ const handleNodeAction = (
 
   if (action === 'set-primary') {
     handleSetPrimaryList(node)
+    return
+  }
+
+  if (action === 'sync-list') {
+    handleSyncList(node)
     return
   }
 
@@ -727,6 +773,7 @@ const syncTree = async () => {
 
   try {
     await syncPageBuilderMenusToTest(menusToSync)
+    await printListPageConfigPayloads(menusToSync)
     const localStatusResponse = await updatePageBuilderLocalStatus({
       syncedMenuIds: idsToSync,
       checkedMenuIds: [...checkedMenuIds.value]
@@ -746,6 +793,79 @@ const syncTree = async () => {
     ElMessage.error(message)
   } finally {
     syncing.value = false
+  }
+}
+
+/**
+ * 生成页面 ID，和 PageBuilder 本地服务的页面映射规则保持一致。
+ * 列表节点自身没有独立页面，使用父级页面编码定位页面数据。
+ */
+const resolvePageIdForMenu = (menu: MenuItem) => {
+  if (menu.pageId) {
+    return menu.pageId
+  }
+
+  const pageCode = String(menu.builderType === 'page' ? menu.code : menu.parentCode || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  return pageCode ? `page_${pageCode}` : ''
+}
+
+/**
+ * 读取列表本地画布数据并打印页面配置提交对象。
+ * 这里只负责组装和核对，不改变现有菜单同步请求，也不提交页面配置接口。
+ */
+const printListPageConfigPayloads = async (menus: MenuItem[]) => {
+  const listMenus = menus.filter(menu => menu.builderType === 'list' && menu.pageConfig)
+
+  for (const menu of listMenus) {
+    const pageId = resolvePageIdForMenu(menu)
+    const parentMenu = flatMenuList.value.find(item => item.code === menu.parentCode)
+
+    if (!pageId || !parentMenu || !menu.pageConfig) {
+      console.info('[PageBuilder][测试环境] 列表配置提交参数无法组装', {
+        menu,
+        reason: '缺少页面 ID、页面父级或页面配置'
+      })
+      continue
+    }
+
+    try {
+      const response = await loadPageBuilderPageData(pageId)
+      const components = Array.isArray(response.data?.data?.renderData?.components)
+        ? response.data.data.renderData.components
+        : []
+      const tableComponent = components
+        .filter((item: { menuId?: string; componentType?: string }) => (
+          item.menuId === menu.id && item.componentType === 'table'
+        ))
+        .map((item: any) => restoreCanvasComponent(item) as CanvasComponent)
+        .find((item: CanvasComponent) => item.type === 'table')
+
+      const pageConfig = { ...menu.pageConfig }
+      delete pageConfig.isPrimaryList
+
+      const pageConfigDetails = tableComponent
+        ? createPageConfigDetailsFromTable(tableComponent, menu, parentMenu)
+        : []
+
+      // 页面基础信息和列详情是两个不同接口的请求体，分别打印以便和旧同步逻辑逐项核对。
+      console.info('[PageBuilder][测试环境] 列表页面配置基础信息提交参数', pageConfig)
+      console.info('[PageBuilder][测试环境] 列表配置详情提交参数', {
+        functionCode: pageConfig.functionCode,
+        parentCode: pageConfig.parentCode,
+        mdmColumnConfigVos: pageConfigDetails
+      })
+    } catch (error) {
+      console.info('[PageBuilder][测试环境] 列表配置提交参数读取失败', {
+        menuId: menu.id,
+        pageId,
+        error: error instanceof Error ? error.message : error
+      })
+    }
   }
 }
 </script>
@@ -834,6 +954,9 @@ const syncTree = async () => {
                         :disabled="data.pageConfig?.isPrimaryList === true"
                       >
                         设为主列表
+                      </el-dropdown-item>
+                      <el-dropdown-item v-if="data.builderType === 'list'" command="sync-list">
+                        同步列表
                       </el-dropdown-item>
                       <el-dropdown-item command="export-code">导出代码</el-dropdown-item>
                       <el-dropdown-item command="edit">编辑</el-dropdown-item>
