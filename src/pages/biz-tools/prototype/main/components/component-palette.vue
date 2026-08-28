@@ -108,14 +108,17 @@ import type {
 } from '../component-types'
 import type { ComponentPaletteItem } from '../component-presets'
 
+// 组件选择器接收当前页面类型，用于过滤可用组件。
 const props = defineProps<{
   contextType: 'list' | 'form' | null
 }>()
 
+// 组件选择器向画布发送新组件配置。
 const emit = defineEmits<{
   (event: 'create', payload: ComponentCreatePayload): void
 }>()
 
+// 根据列表或表单上下文计算当前可展示的组件。
 const visibleItems = computed(() => {
   return componentPaletteItems.filter(item => item.availableFor.includes(props.contextType || 'list'))
 })
@@ -142,9 +145,12 @@ const handleItemClick = (type: CanvasComponentType) => {
   })
 }
 
+// 列表组件配置弹窗的显示状态。
 const tableConfigVisible = ref(false)
+// 列表配置表单实例，预留给后续统一校验逻辑。
 const tableFormRef = ref<any>(null)
 
+// 列表弹窗中的临时配置，确认后才会写入画布。
 const tableConfig = reactive<TableComponentConfig & { columnCount: number }>({
   columnCount: 3,
   selectionMode: 'none',

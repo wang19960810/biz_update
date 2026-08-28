@@ -248,6 +248,7 @@ import type {
 } from '../component-types'
 import type { PageConfig } from '@pages/biz-tools/types'
 
+// 属性面板接收当前组件、页面基础信息和折叠状态。
 const props = defineProps<{
   component: CanvasComponent | null
   tableColumnIndex?: number
@@ -255,30 +256,40 @@ const props = defineProps<{
   collapsed?: boolean
 }>()
 
+// 属性面板向父级同步列选择和面板折叠状态。
 const emit = defineEmits<{
   (event: 'update:tableColumnIndex', index: number): void
   (event: 'update:collapsed', collapsed: boolean): void
 }>()
 
+// 当前正在编辑的画布组件。
 const component = computed(() => props.component)
+// 右侧属性面板是否处于折叠状态。
 const isCollapsed = computed(() => props.collapsed === true)
+// 当前列表面板选中的列下标。
 const selectedTableColumnIndex = ref(props.tableColumnIndex ?? 0)
+// 从页面配置继承展示用的功能名称。
 const pageFunctionName = computed(() => props.pageConfig?.functionName || '')
+// 从页面配置继承展示用的功能编码。
 const pageFunctionCode = computed(() => props.pageConfig?.functionCode || '')
 
+// 属性面板自身使用的折叠和展开图标。
 const icons = {
   Fold: ElementPlusIconsVue.Fold,
   Expand: ElementPlusIconsVue.Expand
 }
 
+// 读取列表组件配置；当前组件不是列表时返回默认配置。
 const tableConfig = computed<TableComponentConfig>(() => component.value?.type === 'table'
   ? component.value.config as TableComponentConfig
   : createDefaultTableConfig())
 
+// 读取按钮组件配置；当前组件不是按钮时返回默认配置。
 const buttonConfig = computed<ButtonComponentConfig>(() => component.value?.type === 'button'
   ? component.value.config as ButtonComponentConfig
   : createDefaultButtonConfig())
 
+// 读取自定义表头配置；当前组件不是表头时返回默认配置。
 const headerConfig = computed<HeaderComponentConfig>(() => component.value?.type === 'custom-header'
   ? component.value.config as HeaderComponentConfig
   : createDefaultHeaderConfig())
@@ -292,6 +303,7 @@ const searchTypeOptions = [
   { label: '文本域', value: 'textarea' }
 ]
 
+// 根据下标取得当前列表列详情。
 const selectedTableColumn = computed<TableColumnConfig | null>(() => {
   return tableConfig.value.columns[selectedTableColumnIndex.value] || null
 })
@@ -324,20 +336,24 @@ watch(() => props.tableColumnIndex, index => {
   }
 })
 
+// 选中列表中的一列，并同步父级选中状态。
 const selectTableColumn = (index: number) => {
   selectedTableColumnIndex.value = index
   emit('update:tableColumnIndex', index)
 }
 
+// 切换右侧属性面板的折叠状态。
 const toggleCollapsed = () => {
   emit('update:collapsed', !isCollapsed.value)
 }
 
+// 在列表末尾新增一列并选中它。
 const addTableColumn = () => {
   tableConfig.value.columns.push(createDefaultTableColumnConfig(tableConfig.value.columns.length + 1))
   selectedTableColumnIndex.value = tableConfig.value.columns.length - 1
 }
 
+// 删除指定列表列并修正选中下标。
 const removeTableColumn = (index: number) => {
   tableConfig.value.columns.splice(index, 1)
 
@@ -351,6 +367,7 @@ const removeTableColumn = (index: number) => {
   }
 }
 
+// 新增一个带系统字段结构的默认按钮。
 const addButton = () => {
   buttonConfig.value.buttons.push({
     assignFunctionCode: '',
@@ -379,10 +396,12 @@ const addButton = () => {
   })
 }
 
+// 删除指定按钮配置。
 const removeButton = (index: number) => {
   buttonConfig.value.buttons.splice(index, 1)
 }
 
+// 新增一个自定义表头统计项。
 const addHeaderStat = () => {
   headerConfig.value.stats.push({
     label: `统计${headerConfig.value.stats.length + 1}`,
@@ -390,6 +409,7 @@ const addHeaderStat = () => {
   })
 }
 
+// 删除指定自定义表头统计项。
 const removeHeaderStat = (index: number) => {
   headerConfig.value.stats.splice(index, 1)
 }

@@ -106,6 +106,7 @@ export const snapshotLocalMenuList = (menus: MenuItem[]): PageBuilderLocalMenuPa
   }))
 }
 
+// 保存菜单快照到本地数据库，并触发本地页面数据和代码生成。
 export const syncPageBuilderState = (payload: PageBuilderSyncPayload) => {
   return instance.post('/api/page-builder/sync', payload)
 }
@@ -113,10 +114,12 @@ export const syncPageBuilderState = (payload: PageBuilderSyncPayload) => {
 /**
  * 只更新本地菜单同步状态，不重复执行本地代码生成。
  */
+// 只保存树节点勾选状态和测试环境同步状态，不触发代码生成。
 export const updatePageBuilderLocalStatus = (payload: PageBuilderLocalStatusPayload) => {
   return instance.post('/api/page-builder/local-status', payload)
 }
 
+// 读取本地 PageBuilder 数据库，恢复菜单树和同步状态。
 export const loadPageBuilderDatabase = () => {
   return instance.get('/api/page-builder/database')
 }
@@ -152,7 +155,9 @@ export const exportPageBuilderCode = (menuId: string) => {
   })
 }
 
+// 测试环境菜单新增或更新接口路径。
 const MENU_API_PATH = '/crm-mdm/v1/competences/competences'
+// 测试环境菜单查询接口路径，用于判断 POST 或 PATCH。
 const MENU_QUERY_PATH = `${MENU_API_PATH}/findByViewItemAndCurrentUser?viewItem=true&codeOrComment=`
 
 /**

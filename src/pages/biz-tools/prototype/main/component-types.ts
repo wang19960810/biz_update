@@ -4,20 +4,20 @@
  * label 用于页面展示，prop 用于绑定列表行数据，width 是可选的列宽。
  */
 export interface TableColumnConfig {
-  label: string
-  prop: string
-  width?: number
-  minWidth?: number
-  visible?: boolean
-  clickView?: boolean
-  columnExport?: boolean
-  fixed?: '' | 'left' | 'right'
-  search?: boolean
-  statistic?: boolean
-  searchType?: string
-  multilineSeparatorInfo?: string
-  dictCode?: string
-  displayOrder?: number
+  label: string // 列展示名称，对应系统配置的 title。
+  prop: string // 列绑定字段名，对应系统配置的 field/entityFieldName。
+  width?: number // 固定列宽，可选。
+  minWidth?: number // 列最小宽度，可选。
+  visible?: boolean // 是否在列表中显示。
+  clickView?: boolean // 点击列内容是否进入查看或编辑视图。
+  columnExport?: boolean // 是否允许导出该列。
+  fixed?: '' | 'left' | 'right' // 列固定方向。
+  search?: boolean // 是否把该字段加入查询条件。
+  statistic?: boolean // 是否参与统计展示。
+  searchType?: string // 查询条件使用的组件类型。
+  multilineSeparatorInfo?: string // 多值字段的分隔符配置。
+  dictCode?: string // 绑定的数据字典编码。
+  displayOrder?: number // 列在系统配置中的显示顺序。
 }
 
 /**
@@ -26,8 +26,8 @@ export interface TableColumnConfig {
  * 这份配置同时服务于画布预览和后续 render.json / 可复制代码生成。
  */
 export interface TableComponentConfig {
-  selectionMode: 'none' | 'single' | 'multiple'
-  columns: TableColumnConfig[]
+  selectionMode: 'none' | 'single' | 'multiple' // 列表行选择模式。
+  columns: TableColumnConfig[] // 列表的业务列配置。
 }
 
 /**
@@ -36,32 +36,32 @@ export interface TableComponentConfig {
  * 这里的字段尽量贴近系统页面按钮定义，方便后续直接映射同步字段。
  */
 export interface ButtonItemConfig {
-  assignFunctionCode: string
-  buttonCode: string
-  buttonName: string
-  buttonOrder: number
-  buttonType: string
-  name: string
-  parentCode: string
-  type: string | null
-  visible: boolean
-  apiUrl?: string | null
-  ask?: string | null
-  buttonId?: string
-  buttonMethod?: string
-  buttonOperationType?: string | null
-  buttonTypeName?: string | null
-  code?: string
-  configCode?: string | null
-  doCode?: string | null
-  functionCode?: string
-  iconCode?: string
-  iconEffect?: string | null
-  iconName?: string | null
-  iconStyle?: string | null
-  iconUrl?: string | null
-  id?: string
-  queryUrl?: string | null
+  assignFunctionCode: string // 被分配的功能编码。
+  buttonCode: string // 按钮业务编码。
+  buttonName: string // 按钮展示名称。
+  buttonOrder: number // 按钮显示顺序。
+  buttonType: string // 按钮样式类型。
+  name: string // 按钮名称兼容字段。
+  parentCode: string // 所属父级编码。
+  type: string | null // 系统按钮类型。
+  visible: boolean // 是否显示按钮。
+  apiUrl?: string | null // 按钮请求地址。
+  ask?: string | null // 执行前确认提示。
+  buttonId?: string // 系统按钮 ID。
+  buttonMethod?: string // 按钮触发方法。
+  buttonOperationType?: string | null // 按钮操作类型。
+  buttonTypeName?: string | null // 按钮类型名称。
+  code?: string // 按钮编码兼容字段。
+  configCode?: string | null // 按钮配置编码。
+  doCode?: string | null // 按钮执行代码。
+  functionCode?: string // 所属功能编码。
+  iconCode?: string // 图标编码。
+  iconEffect?: string | null // 图标效果。
+  iconName?: string | null // 图标名称。
+  iconStyle?: string | null // 图标样式。
+  iconUrl?: string | null // 图标地址。
+  id?: string // 系统按钮主键。
+  queryUrl?: string | null // 查询请求地址。
 }
 
 /**
@@ -75,15 +75,15 @@ export interface ButtonComponentConfig {
  * 自定义表头组件配置。
  */
 export interface HeaderStatConfig {
-  label: string
-  value: string
-  tone?: string
+  label: string // 统计项名称。
+  value: string // 统计项展示值。
+  tone?: string // 统计项视觉样式。
 }
 
 export interface HeaderComponentConfig {
-  title: string
-  description: string
-  stats: HeaderStatConfig[]
+  title: string // 表头主标题。
+  description: string // 表头说明文本。
+  stats: HeaderStatConfig[] // 表头统计项集合。
 }
 
 /**
@@ -103,8 +103,8 @@ export type CanvasComponentConfig =
  * 组件面板提交给画布的创建数据。
  */
 export interface ComponentCreatePayload {
-  type: CanvasComponentType
-  config: CanvasComponentConfig
+  type: CanvasComponentType // 要创建的组件类型。
+  config: CanvasComponentConfig // 组件初始配置。
 }
 
 /**
@@ -160,10 +160,10 @@ export interface TableComponentExtendedConfig extends TableComponentConfig {
  * 这个接口用于画布内存状态，创建时不带 ID，保存后会生成 componentId 并持久化。
  */
 export interface CanvasComponent {
-  id: string // 临时 ID，用于画布内 v-for key
-  componentId?: string // 持久化后的数据库 ID
-  type: CanvasComponentType
-  name: string
-  config: CanvasComponentConfig
-  saved?: boolean // 是否已保存到数据库
+  id: string // 临时 ID，用于画布内 v-for key。
+  componentId?: string // 持久化后的数据库 ID。
+  type: CanvasComponentType // 画布组件类型。
+  name: string // 画布中显示的组件名称。
+  config: CanvasComponentConfig // 当前组件的完整配置。
+  saved?: boolean // 是否已保存到本地数据库。
 }

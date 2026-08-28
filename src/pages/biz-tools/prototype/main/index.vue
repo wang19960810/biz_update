@@ -75,6 +75,7 @@
             v-for="component in currentCanvasComponents"
             :key="component.id"
             class="canvas-component-card"
+            :data-component-id="component.id"
             :class="{ 'is-selected': selectedCanvasComponent?.id === component.id }"
             @click="handleCanvasComponentClick(component.id)"
           >
@@ -207,6 +208,8 @@ const propertyPanelCollapsed = ref(false)
 const canvasDragActive = ref(false)
 const saving = ref(false)
 const loadedPageIds = new Set<string>()
+// 当前一次拖拽在画布中的目标插入位置；配置弹窗确认后仍使用这个位置。
+const pendingComponentInsertIndex = ref<number | null>(null)
 
 // 页面 ID 由服务端按菜单编码生成；已有数据库映射优先使用 pageId。
 const resolvePageId = (menu: MenuItem) => {
@@ -342,9 +345,29 @@ const isCanvasTargetMenu = (menu: MenuItem | null) => {
   return menu?.builderType === 'list' || menu?.builderType === 'form'
 }
 
-// 处理组件拖入画布上方的视觉状态。
-const handleCanvasDragOver = () => {
+// 根据拖拽鼠标的纵坐标计算组件应插入的数组下标。
+const resolveComponentInsertIndex = (event: DragEvent) => {
+  const target = (event.target as HTMLElement | null)?.closest('.canvas-component-card')
+
+  if (!target) {
+    return currentCanvasComponents.value.length
+  }
+
+  const componentId = target.getAttribute('data-component-id')
+  const targetIndex = currentCanvasComponents.value.findIndex(item => item.id === componentId)
+
+  if (targetIndex < 0) {
+    return currentCanvasComponents.value.length
+  }
+
+  const rect = target.getBoundingClientRect()
+  return event.clientY < rect.top + rect.height / 2 ? targetIndex : targetIndex + 1
+}
+
+// 处理组件拖入画布上方的视觉状态，并实时记录预计插入位置。
+const handleCanvasDragOver = (event: DragEvent) => {
   canvasDragActive.value = true
+  pendingComponentInsertIndex.value = resolveComponentInsertIndex(event)
 }
 
 // 拖拽离开画布时取消高亮。
@@ -362,6 +385,7 @@ const handleCanvasDragLeave = (event: DragEvent) => {
 // 接收组件面板拖拽，列表需要先经过配置弹窗再创建实例。
 const handleCanvasDrop = (event: DragEvent) => {
   canvasDragActive.value = false
+  pendingComponentInsertIndex.value = resolveComponentInsertIndex(event)
   const componentType = event.dataTransfer?.getData('component-type')
 
   if (componentType !== 'table' && componentType !== 'button' && componentType !== 'custom-header') {
@@ -401,7 +425,12 @@ const handleComponentCreate = (payload: ComponentCreatePayload) => {
     config: payload.config
   }
 
-  components.push(component)
+  const insertIndex = pendingComponentInsertIndex.value == null
+    ? components.length
+    : Math.max(0, Math.min(pendingComponentInsertIndex.value, components.length))
+
+  components.splice(insertIndex, 0, component)
+  pendingComponentInsertIndex.value = null
   selectedComponentIdByMenu[menuId] = component.id
   ElMessage.success(`${getComponentTypeLabel(payload.type)}组件已添加到画布`)
 }
